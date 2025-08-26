@@ -10,7 +10,7 @@ Repositório da disciplina do Projeto Integrador em Computação IV pela Univesp
 
 3. [Objetivo](#objetivo)
 
-4. [Scripts Python](scripts/script_python.py)
+4. [Script Python](scripts/script_python.py)
 
 5. [Dashboard](dashboard/dashboard.pdf)
 
