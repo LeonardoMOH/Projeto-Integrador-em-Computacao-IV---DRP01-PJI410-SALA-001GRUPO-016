@@ -10,14 +10,6 @@ Repositório da disciplina do Projeto Integrador em Computação IV pela Univesp
 
 3. [Objetivo](#objetivo)
 
-    I.    [Lab AWS S3 Exercise/Exercício Lab AWS S3](#Exercício01)
-
-    [index.html](Exercicios/index.html)
-
-    [error.html](Exercicios/error.html)
-
-    [nomes.csv](Exercicios/dados/nomes.csv)
-
 4. [Scripts Python](scripts/script_python.py)
 
 5. [Dashboard](dashboard/dashboard.pdf)
