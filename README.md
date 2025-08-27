@@ -24,4 +24,9 @@ Uma instituição religiosa possui um amplo estacionamento onde o uso por seus m
 
 # Objetivo
 
-Transformar registros operacionais em informações estratégicas, permitindo: Identificação de horários de pico e períodos de baixa demanda; Monitoramento da rotatividade e tempo médio de permanência; Classificação de perfis de usuários inadimplentes; Detecção de comportamentos atípicos ou recorrentes; Apoio à tomada de decisões para melhorias operacionais. Também faz parte do objetivo cumprir, por meio deste projeto, todos os requisitos da disciplina acadêmica.
+Transformar registros operacionais em informações estratégicas, permitindo:\
+ Identificação de horários de pico e períodos de baixa demanda;\
+ Monitoramento da rotatividade e tempo médio de permanência;\
+ Classificação de perfis de usuários inadimplentes;\
+ Detecção de comportamentos atípicos ou recorrentes;\
+ Apoio à tomada de decisões para melhorias operacionais. Também faz parte do objetivo cumprir, por meio deste projeto, todos os requisitos da disciplina acadêmica.
