@@ -12,7 +12,7 @@ Repositório da disciplina do Projeto Integrador em Computação IV pela Univesp
 
 4. [README Script Python](scripts/README.md)
 
-5.[Dataset em CSV](dataset/dataset.csv)
+5. [Dataset em CSV](dataset/dataset.csv)
 
 6. [Script Python](scripts/script_python.py)
 
