@@ -101,7 +101,7 @@ Este é o template HTML que compõe a interface do usuário.
   * **Exibição de Estatísticas**: Mostra o `Total de Registros` utilizando a sintaxe `{{ estatisticas.total_registros }}`
   * **Estrutura de Gráficos**: Cada gráfico é encapsulado em uma `div` com a classe `chart` para organização.
   * **Incorporação de Imagens**: Utiliza a tag `<img>` com o atributo `src="data:image/png;base64,{{ nome_da_variavel_do_grafico }}"` para incorporar as imagens dos gráficos diretamente no HTML. Isso elimina a necessidade de salvar arquivos de imagem temporários no servidor.
-  * **Mensagens de Erro**: Inclui blocos condicionais do Jinja (`{% if ... %}`) para exibir mensagens de erro amigáveis caso um gráfico específico não possa ser gerado (e.g., por falta de dados).
+  * **Mensagens de Erro**: Inclui blocos condicionais (`{% if ... %}`) para exibir mensagens de erro amigáveis caso um gráfico específico não possa ser gerado (e.g., por falta de dados).
 
 ## Resultados
 
