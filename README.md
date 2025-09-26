@@ -20,7 +20,7 @@ Repositório da disciplina do Projeto Integrador em Computação IV pela Univesp
 
 ---
 
-## Tema
+# Tema
 
 Desenvolvimento de interface para Análise de Dados de um sistema de controle de estacionamento utilizado instituição religiosa. Disponibilizando Análise Descritiva, Análise Preditiva, Análise Exploratória e Machine Learning.
 
