@@ -1,0 +1,14 @@
+# Ignorar pastas de ambiente virtual
+venv/
+env/
+.venv/
+
+# Ignorar arquivos de cache e outros gerados automaticamente
+__pycache__/
+*.pyc
+.pytest_cache/
+.vscode/
+
+# Ignorar logs e dados sensíveis
+*.log
+*.sqlite3
