@@ -108,10 +108,10 @@ Este é o template HTML que compõe a interface do usuário.
 Abaixo, algumas imagens dos gráficos gerados pelo aplicativo:
 
 *Gráfico 1: Média de Duração por Dia da Semana*
-![resultado](imagens\resultados_1.png)
+![resultado](imagens/resultados_1.png)
 
 *Gráfico 2: Média de Duração Geral e Histograma da Duração de Permanência*
-![resultado](imagens\resultados_2.png)
+![resultado](imagens/resultados_2.png)
 
 *Gráfico 3: Box Plot da Duração por Mês e Mapa de Calor da Duração Média*
-![resultado](imagens\resultados_3.png)
+![resultado](imagens/resultados_3.png)
