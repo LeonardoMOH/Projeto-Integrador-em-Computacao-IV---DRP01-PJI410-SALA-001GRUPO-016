@@ -1,4 +1,4 @@
-# Projeto Integrador em Computação IV - DRP01-PJI410-SALA-001GRUPO-016
+# Databay - Projeto Integrador em Computação IV - DRP01-PJI410-SALA-001GRUPO-016
 
 Repositório da disciplina do Projeto Integrador em Computação IV pela Univesp do grupo DRP-01-PJI410-SALA-001GRUPO-016.
 
@@ -7,101 +7,103 @@ Repositório da disciplina do Projeto Integrador em Computação IV pela Univesp
 2. [Problema](#problema)
 3. [Objetivo](#objetivo)
 4. [Recursos de Dados](#recursos-de-dados)
-   - [Dataset Entrada e Saída em CSV](analise_dados_flask\dataset\csv_estacionamento.csv)
-   - [Dataset Entrada e Saída em CSV Tratado](analise_dados_flask\dataset\csv_estacionamento_tratado.csv)
-   - [Dataset Pagamento em CSV](analise_dados_flask\dataset\pagamentos_placas.csv)
-   - [Dataset Pagamento em CSV Tratado](analise_dados_flask\dataset\pagamentos_placas_tratado.csv)
+    - [Dataset Entrada e Saída em CSV](#dataset-entrada-e-saída-em-csv)
+    - [Dataset Entrada e Saída em CSV Tratado](#dataset-entrada-e-saída-em-csv-tratado)
+    - [Dataset Pagamento em CSV](#dataset-pagamento-em-csv)
+    - [Dataset Pagamento em CSV Tratado](#dataset-pagamento-em-csv-tratado)
 5. [Aplicativo Flask para Análise de Dados de Estacionamento](#aplicativo-flask-para-análise-de-dados-de-estacionamento)
-   - [Funcionalidades](#funcionalidades)
+    - [Funcionalidades](#funcionalidades)
 6. [Detalhes do Código](#detalhes-do-código)
-   - [`app.py`](#apppy)
-   - [`index.html`](#indexhtml)
+    - [`app.py`](#apppy)
+    - [`index.html`](#indexhtml)
 7. [Resultados](#resultados)
 
 ---
 
-# Tema
+# Databay – Sistema de Inteligência Analítica para Estacionamentos
 
-Desenvolvimento de interface para Análise de Dados de um sistema de controle de estacionamento utilizado instituição religiosa. Disponibilizando Análise Descritiva, Análise Preditiva, Análise Exploratória e Machine Learning.
+![Databay](imagens/databay.png)
+
+## Tema
+
+Implementação de análise de dados que são gerados pelo fluxo diário de veículos em um estacionamento de uma instituição religiosa, disponibilizando interface para visualização e gerenciamento.
 
 ## Problema
 
-Uma instituição religiosa possui um amplo estacionamento onde o uso por seus membros é franqueado, mas, existe procura por pessoas que se tornam mensalistas devido à boa localização (Próxima à estação Mogi das Cruzes e na rota das linhas de ônibus executivos). Neste cenário, a movimentação diária com entradas e saídas de veículos, além da necessidade de controle financeiro, geram acúmulo de dados que precisam ser mais bem aproveitados para tomadas de decisões embasadas em uma visão clara dos dados.
+Os dados acumulados no registro de movimentações diárias de veículos automotores em um estacionamento de uma instituição religiosa não têm sido aproveitados, tornandose apenas armazenamento de informações quase obsoletas. Tais dados poderão ser utilizados de forma estratégica para a tomada de decisões e melhorias operacionais, além de possibilitarem uma visão clara e objetiva dos acontecimentos. Este estacionamento é gratuito para membros, porém, outras pessoas procuram a entidade para se tornarem mensalistas. Isso acontece porque a localização da organização é privilegiada em relação ao acesso a transportes públicos — próxima à estação da CPTM e na rota de ônibus executivos — ou seja, é um local onde se pode deixar veículos em segurança e direcionar-se à capital para o trabalho.
+
 
 ## Objetivo
 
-Transformar registros operacionais em informações estratégicas, permitindo:
-* Identificação de horários de pico e períodos de baixa demanda;
-* Monitoramento da rotatividade e tempo médio de permanência;
-* Classificação de perfis de usuários inadimplentes;
-* Detecção de comportamentos atípicos ou recorrentes;
-* Apoio à tomada de decisões para melhorias operacionais.
-
-Também faz parte do objetivo cumprir, por meio deste projeto, todos os requisitos da disciplina acadêmica.
+Transformar registros operacionais em informações estratégicas, permitindo: Identificação de horários de pico e períodos de baixa demanda; Monitoramento da rotatividade e tempo médio de permanência; Classificação de perfis de usuários inadimplentes; Detecção de comportamentos atípicos ou recorrentes; Apoio à tomada de decisões para melhorias operacionais. Também faz parte do objetivo cumprir, por meio deste projeto, todos os requisitos da disciplina acadêmica.
 
 ## Recursos de Dados
 
-* [**Dataset Entrada e Saída em CSV**](analise_dados_flask\dataset\csv_estacionamento.csv)
-* [**Dataset Entrada e Saída em CSV Tratado**](analise_dados_flask\dataset\csv_estacionamento_tratado.csv)
-* [**Dataset Pagamento em CSV**](analise_dados_flask\dataset\pagamentos_placas.csv)
-* [**Dataset Pagamento em CSV Tratado**](analise_dados_flask\dataset\pagamentos_placas_tratado.csv)
+Os dados utilizados neste projeto estão localizados no diretório `analise_dados_flask/dataset/`.
+
+* [**Dataset Entrada e Saída em CSV (`csv_estacionamento.csv`)**](analise_dados_flask/dataset/csv_estacionamento.csv)
+    * Contém as entradas e saídas de veículos.
+* [**Dataset Entrada e Saída em CSV Tratado (`csv_estacionamento_tratado.csv`)**](analise_dados_flask/dataset/csv_estacionamento_tratado.csv)
+    * Versão processada do dataset de estacionamento, com colunas calculadas como duração, mês, dia da semana etc.
+* [**Dataset Pagamento em CSV (`pagamentos_placas.csv`)**](analise_dados_flask/dataset/pagamentos_placas.csv)
+    * Contém informações sobre os pagamentos dos mensalistas.
+* [**Dataset Pagamento em CSV Tratado (`pagamentos_placas_tratado.csv`)**](analise_dados_flask/dataset/pagamentos_placas_tratado.csv)
+    * Versão processada do dataset de pagamentos, incluindo o `Status_Pagamento`.
 
 ## Aplicativo Flask para Análise de Dados de Estacionamento
 
-Este é um aplicativo web simples construído com Flask para realizar a análise exploratória de dados de registros de estacionamento. Ele processa um arquivo CSV, trata os dados e gera diversos gráficos para visualizar padrões de duração de permanência por dia da semana, média geral, distribuição de duração e padrões de uso ao longo do dia.
+Este é um aplicativo web simples construído com Flask para realizar a análise exploratória de dados de registros de estacionamento e pagamentos. Ele processa arquivos CSV, trata os dados e gera diversos gráficos e KPIs para visualizar padrões de duração de permanência, horários de pico, e status de pagamento dos mensalistas.
 
 ### Funcionalidades
 
-* **Processamento de Dados:** Lê dados de estacionamento de um arquivo CSV.
-* **Tratamento de Dados:**
+* **Processamento e Tratamento de Dados:**
+    * Lê dados de estacionamento e pagamento de arquivos CSV.
     * Converte strings de data e hora em objetos `datetime`.
-    * Calcula a duração da permanência em horas.
-    * Extrai o mês, o dia da semana e a hora de entrada.
+    * Calcula a duração da permanência em horas para estacionamento.
+    * Extrai mês, dia da semana e hora de entrada para análise.
+    * Classifica o `Status_Pagamento` (Em Dia ou Inadimplente) para o dataset de pagamentos.
     * Trata casos de saída no dia seguinte e valores ausentes.
-    * Cria um arquivo CSV tratado no diretório `dataset` do projeto.
-* **Análise Exploratória de Dados (EDA):** Gera os seguintes gráficos:
+    * Cria arquivos CSV tratados para ambos os datasets no diretório `dataset` do projeto.
+* **Key Performance Indicators (KPIs):**
+    * Exibe o **Total de Registros de Estacionamento** e **Total de Registros de Pagamento** em cards visuais e interativos no dashboard.
+* **Análise Exploratória de Dados (EDA) para Estacionamento:** Gera os seguintes gráficos:
     1.  **Média de Duração por Dia da Semana:** Um gráfico de barras mostrando a duração média de permanência em cada dia da semana.
     2.  **Média de Duração Geral:** Um gráfico de barras simples exibindo a duração média de permanência em todo o conjunto de dados.
     3.  **Histograma da Duração de Permanência:** Um histograma para visualizar a distribuição das durações de permanência.
     4.  **Box Plot da Duração por Mês:** Um box plot que mostra a distribuição da duração de permanência para cada mês.
     5.  **Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana:** Um mapa de calor que visualiza a duração média de permanência em diferentes horas do dia e dias da semana, identificando horários de pico ou padrões de uso.
-* **Visualização Web:** Apresenta os gráficos e estatísticas (como o total de registros) de forma interativa em uma página web.
+* **Análise Exploratória de Dados (EDA) para Pagamentos:** Gera o seguinte gráfico:
+    1.  **Gráfico de Status de Pagamento dos Mensalistas:** Um gráfico de setores (pizza) mostrando a proporção de mensalistas "Em Dia" e "Inadimplentes".
+* **Visualização Web:** Apresenta todos os gráficos, KPIs e estatísticas de forma interativa e responsiva em um dashboard web.
 
 ## Detalhes do Código
 
 ### `app.py`
 
-Este arquivo contém a lógica de backend do aplicativo.
+Este arquivo contém a lógica de backend do aplicativo Flask.
 
-  * **Importações**: Carrega todas as bibliotecas utilizadas no arquivo python, como `pandas` (manipulação de dados), `numpy` (operações numéricas), `matplotlib` e `seaborn` (geração de gráficos), `flask` (framework web), `io` e `base64` (para codificar imagens dos gráficos).
-  * **`formatar_duracao_numerica(td)`**: Função auxiliar que converte objetos `Timedelta` (diferenças de tempo) em um valor numérico representando a duração em horas.
-  * **`tratar_dados_estacionamento(df)`**: A função principal de pré-processamento de dados. Ela realiza:
-      * Combinação de 'Data' com 'Entrada' e 'Saida' para criar *timestamps* completos.
-      * Cálculo da `Duracao` da permanência em horas.
-      * Extração de 'Marca' e 'Modelo' da coluna 'Marca/Modelo'.
-      * Adição de colunas auxiliares como 'Mes', 'Dia\_Semana' e 'Hora\_Entrada' para análises.
-      * Tratamento de casos onde a saída ocorre no dia seguinte à entrada.
-      * Remoção de linhas com valores ausentes (`NaN`) em colunas críticas.
-  * **`gerar_grafico(fig, ax, title, xlabel, ylabel, show_values_on_bars)`**: Uma função utilitária que encapsula a geração e codificação de gráficos. Ela recebe uma figura e um eixo do Matplotlib, configura títulos e rótulos, e opcionalmente adiciona valores nas barras. O gráfico é salvo em um *stream* de memória, codificado em Base64 e retornado como uma string, permitindo a incorporação direta no HTML.
-  * **`realizar_analise_completa()`**: função principal de análise de dados:
-      * Tenta carregar o `csv_estacionamento.csv` do diretório `dataset/`. Em caso de erro (ex: arquivo não encontrado), retorna uma mensagem de erro.
-      * Invoca `tratar_dados_estacionamento()` para preparar o DataFrame.
-      * Gera os 5 gráficos de análise exploratória descritos nas [Funcionalidades](#funcionalidades), utilizando Matplotlib/Seaborn e a função `gerar_grafico()`.
-      * Salva o DataFrame tratado como `csv_estacionamento_tratado.csv` na pasta `dataset/`.
-      * Retorna um dicionário com estatísticas (atualmente, `total_registros`) e as strings Base64 de todos os gráficos gerados.
-  * **`@app.route('/')` (função `index()`):** Define a rota para a página inicial (`/`). Quando acessada, ela:
-      * Chama `realizar_analise_completa()` para obter os dados processados e os gráficos.
-      * Verifica se houve um erro na leitura ou tratamento do CSV e, se sim, renderiza a página `erro.html`.
-      * Caso contrário, renderiza o template `index.html`, passando todas as estatísticas e os gráficos para exibição.
+* **Importações**: Carrega bibliotecas como `pandas`, `numpy`, `matplotlib`, `seaborn`, `flask`, `io`, `base64` para manipulação de dados, geração de gráficos e interface web.
+* **`formatar_duracao_numerica(td)`**: Função auxiliar que converte objetos `Timedelta` em duração em horas.
+* **`tratar_dados_estacionamento(df)`**: Pré-processa o DataFrame de estacionamento, calculando durações, extraindo componentes de data/hora (mês, dia da semana, hora de entrada) e tratando dados ausentes.
+* **`tratar_dados_pagamento(df_pagamentos)`**: Pré-processa o DataFrame de pagamentos, calculando o `Status_Pagamento` baseado na data limite e dia de pagamento.
+* **`gerar_grafico(fig, ax, ...)`**: Função utilitária que salva uma figura Matplotlib em um `BytesIO` e a codifica em Base64 para ser incorporada diretamente no HTML.
+* **`gerar_grafico_status_pagamento(df_pagamentos)`**: Função específica para criar o gráfico de setores de status de pagamento, incluindo lógica de cores e legendas.
+* **`realizar_analise_completa()`**: A função principal de análise de dados.
+    * Carregamento e tratamento de `csv_estacionamento.csv` e `pagamentos_placas.csv`.
+    * Geração de todos os gráficos de estacionamento (5) e de pagamento (1).
+    * Salvamento dos DataFrames tratados em arquivos CSV.
+    * Retorna um dicionário com estatísticas (total de registros) e as strings Base64 de todos os gráficos.
+* **`@app.route('/')` (função `index()`):** A rota principal do aplicativo. Chama `realizar_analise_completa()` e renderiza o template `index.html`, passando todas as estatísticas e gráficos para exibição.
 
 ### `index.html`
 
-Este é o template HTML que compõe a interface do usuário.
+Este é o template HTML que constrói a interface do usuário do dashboard.
 
-  * **Exibição de Estatísticas**: Mostra o `Total de Registros` utilizando a sintaxe `{{ estatisticas.total_registros }}`
-  * **Estrutura de Gráficos**: Cada gráfico é encapsulado em uma `div` com a classe `chart` para organização.
-  * **Incorporação de Imagens**: Utiliza a tag `<img>` com o atributo `src="data:image/png;base64,{{ nome_da_variavel_do_grafico }}"` para incorporar as imagens dos gráficos diretamente no HTML. Isso elimina a necessidade de salvar arquivos de imagem temporários no servidor.
-  * **Mensagens de Erro**: Inclui blocos condicionais (`{% if ... %}`) para exibir mensagens de erro amigáveis caso um gráfico específico não possa ser gerado (e.g., por falta de dados).
+* **Design Responsivo**: Utiliza CSS para criar um layout responsivo, adaptando-se a diferentes tamanhos de tela.
+* **Key Performance Indicators (KPIs)**: Exibe o total de registros de estacionamento e pagamento em cards, com cores distintas e efeitos.
+* **Estrutura de Gráficos**: Cada gráfico é renderizado dentro de um contêiner estilizado (`<div class="chart">`), garantindo uma apresentação visual consistente.
+* **Incorporação de Imagens**: As imagens dos gráficos geradas pelo Flask são incorporadas diretamente no HTML usando `src="data:image/png;base64,{{ nome_da_variavel_do_grafico }}"`, eliminando a necessidade de arquivos temporários.
+* **Mensagens de Erro**: Blocos condicionais (`{% if ... %}`) exibem mensagens de erro amigáveis caso os dados não possam ser carregados ou um gráfico não possa ser gerado.
 
 ## Resultados
 
