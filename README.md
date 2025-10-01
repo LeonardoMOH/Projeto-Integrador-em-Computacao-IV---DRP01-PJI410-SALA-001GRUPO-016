@@ -109,11 +109,17 @@ Este é o template HTML que constrói a interface do usuário do dashboard.
 
 Abaixo, algumas imagens dos gráficos gerados pelo aplicativo:
 
-*Gráfico 1: Média de Duração por Dia da Semana*
+*Início de dashboard e KPIs*
 ![resultado](imagens/resultados_1.png)
 
-*Gráfico 2: Média de Duração Geral e Histograma da Duração de Permanência*
+*Gráficos 1, 2: Média de Duração por Dia da Semana e Média de Duração Geral*
 ![resultado](imagens/resultados_2.png)
 
-*Gráfico 3: Box Plot da Duração por Mês e Mapa de Calor da Duração Média*
+*Gráficos 3, 4: Histograma da Duração de Permanência e Box Plot da Duração por Mês*
 ![resultado](imagens/resultados_3.png)
+
+*Gráfico 5: Mapa de Calor da Duração Média*
+![resultado](imagens/resultados_4.png)
+
+*Gráficos 6: Gráfico de Setores de Status de Pagamento dos Mensalistas*
+![resultado](imagens/resultados_5.png)
