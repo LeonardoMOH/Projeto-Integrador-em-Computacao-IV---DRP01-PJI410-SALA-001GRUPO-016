@@ -204,15 +204,22 @@
         <div class="charts-container">
             {# -- Gráfico 6: Status de Pagamento (Setores) -- #}
             <div class="chart">
-                <h3>Status de Pagamento dos Mensalistas</h3>
-                {% if grafico_status_pagamento %}
+                <h3>Status de Pagamento dos Mensalistas (Geral)</h3> {% if grafico_status_pagamento %}
                     <img src="data:image/png;base64,{{ grafico_status_pagamento }}" alt="Gráfico de Status de Pagamento (Inadimplentes vs. Em Dia)">
                 {% else %}
                     <p class="error-message">Não foi possível gerar o Gráfico de Status de Pagamento.</p>
                 {% endif %}
             </div>
-        </div>
 
+            {# --- Gráfico 7: Status de Pagamento por Mês --- #}
+            <div class="chart">
+                <h3>Status de Pagamento Mensal de Mensalistas</h3> {% if grafico_status_pagamento_por_mes %}
+                    <img src="data:image/png;base64,{{ grafico_status_pagamento_por_mes }}" alt="Gráfico de Status de Pagamento por Mês">
+                {% else %}
+                    <p class="error-message">Não foi possível gerar o Gráfico de Status de Pagamento por Mês.</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </body>
 </html>

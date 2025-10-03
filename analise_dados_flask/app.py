@@ -53,6 +53,11 @@ def tratar_dados_pagamento(df_pagamentos):
     df_pagamentos.dropna(subset=['Data_Limite_Pagamento_DT', 'Dia_Efetuado'], inplace=True)
 
     df_pagamentos['Dia_Limite'] = df_pagamentos['Data_Limite_Pagamento_DT'].dt.day
+    
+    # Adicionar coluna de Mês para análise mensal de inadimplência
+    df_pagamentos['Mes'] = df_pagamentos['Data_Limite_Pagamento_DT'].dt.month
+    df_pagamentos['Ano'] = df_pagamentos['Data_Limite_Pagamento_DT'].dt.year
+
 
     df_pagamentos['Status_Pagamento'] = df_pagamentos.apply(
         lambda row: 'Em Dia' if row['Dia_Efetuado'] <= row['Dia_Limite'] else 'Inadimplente',
@@ -61,7 +66,7 @@ def tratar_dados_pagamento(df_pagamentos):
 
     print("\n--- Debug Tratamento de Dados Pagamento (NOVA LÓGICA) ---")
     print(f"df_pagamentos_tratado após tratamento ({len(df_pagamentos)} linhas):\n")
-    print(df_pagamentos[['Placa', 'Dia de Pagamento', 'Dia_Efetuado', 'Data do Pagamento', 'Dia_Limite', 'Status_Pagamento']].head())
+    print(df_pagamentos[['Placa', 'Dia de Pagamento', 'Dia_Efetuado', 'Data do Pagamento', 'Dia_Limite', 'Mes', 'Ano', 'Status_Pagamento']].head())
     print("Contagem de Status de Pagamento:\n", df_pagamentos['Status_Pagamento'].value_counts())
     print("----------------------------------------------------------\n")
 
@@ -90,7 +95,7 @@ def gerar_grafico(fig, ax, title="", xlabel="", ylabel="", show_values_on_bars=F
     return img_base64
 
 # --- Função para gerar gráfico de setores de pagamento ---
-def gerar_grafico_status_pagamento(df_pagamentos):    
+def gerar_grafico_status_pagamento(df_pagamentos):
     if df_pagamentos.empty or 'Status_Pagamento' not in df_pagamentos.columns:
         fig, ax = plt.subplots(figsize=(8, 8))
         ax.text(0.5, 0.5, "Sem dados para o gráfico de status de pagamento", horizontalalignment='center', verticalalignment='center', fontsize=12, color='gray')
@@ -109,7 +114,7 @@ def gerar_grafico_status_pagamento(df_pagamentos):
         ax.axis('off')
         return gerar_grafico(fig, ax, title='Status de Pagamento dos Mensalistas', plot_type='bar')
 
-    cmap = plt.get_cmap('RdYlGn') 
+    cmap = plt.get_cmap('RdYlGn')
     assigned_colors = []
     
     if 'Em Dia' in actual_labels and 'Inadimplente' in actual_labels:
@@ -122,7 +127,7 @@ def gerar_grafico_status_pagamento(df_pagamentos):
 
     explode = [0] * len(actual_labels)
     if 'Inadimplente' in actual_labels:
-        explode[actual_labels.index('Inadimplente')] = 0.08 
+        explode[actual_labels.index('Inadimplente')] = 0.08
             
     if len(actual_labels) == 1:
         explode = (0,)
@@ -130,27 +135,27 @@ def gerar_grafico_status_pagamento(df_pagamentos):
     fig, ax = plt.subplots(figsize=(8, 8))
     
     wedges, texts, autotexts = ax.pie(actual_sizes,
-                                         colors=assigned_colors,
-                                         autopct='%1.1f%%',
-                                         startangle=90,
-                                         wedgeprops={'edgecolor': 'black'},
-                                         explode=explode)
+                                      colors=assigned_colors,
+                                      autopct='%1.1f%%',
+                                      startangle=90,
+                                      wedgeprops={'edgecolor': 'black'},
+                                      explode=explode)
 
     ax.set_title('Status de Pagamento dos Mensalistas')
     ax.axis('equal')
 
     legend_labels_with_count = [f'{l}: {s}' for l, s in zip(actual_labels, actual_sizes)]
     ax.legend(wedges, legend_labels_with_count,
-                  title="Status",
-                  loc="center left",
-                  bbox_to_anchor=(1, 0, 0.5, 1))
+              title="Status",
+              loc="center left",
+              bbox_to_anchor=(1, 0, 0.5, 1))
 
     for autotext in autotexts:
         autotext.set_color('black')
         autotext.set_fontsize(10)
     
     for text in texts:
-        text.set_text('') 
+        text.set_text('')
 
     img_stream = io.BytesIO()
     fig.savefig(img_stream, format='png', bbox_inches='tight')
@@ -158,6 +163,74 @@ def gerar_grafico_status_pagamento(df_pagamentos):
     img_base64 = base64.b64encode(img_stream.read()).decode('utf-8')
     plt.close(fig)
     return img_base64
+
+
+# --- Gráfico de Status de Pagamento por Mês (Em Dia vs. Inadimplente) ---
+def gerar_grafico_status_pagamento_por_mes(df_pagamentos):
+    if df_pagamentos.empty or 'Status_Pagamento' not in df_pagamentos.columns or 'Mes' not in df_pagamentos.columns:
+        fig, ax = plt.subplots(figsize=(12, 7))
+        ax.text(0.5, 0.5, "Sem dados para o gráfico de status de pagamento por mês", horizontalalignment='center', verticalalignment='center', fontsize=12, color='gray')
+        ax.axis('off')
+        return gerar_grafico(fig, ax, title='Status de Pagamento por Mês')
+
+    meses_nomes = {
+        1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun',
+        7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
+    }
+
+    # Contagem de status por mês
+    contagem_mensal = df_pagamentos.groupby(['Mes', 'Status_Pagamento']).size().unstack(fill_value=0)
+    
+    # Garantir que ambos os status existam, mesmo que com zero em alguns meses
+    for status in ['Em Dia', 'Inadimplente']:
+        if status not in contagem_mensal.columns:
+            contagem_mensal[status] = 0
+
+    # Adiciona coluna de total mensal para filtrar meses sem dados
+    contagem_mensal['Total_Mensal'] = contagem_mensal[['Em Dia', 'Inadimplente']].sum(axis=1)
+    contagem_mensal = contagem_mensal[contagem_mensal['Total_Mensal'] > 0].drop(columns=['Total_Mensal'])
+
+    # Se não houver dados após o filtro, gera um gráfico vazio
+    if contagem_mensal.empty:
+        fig, ax = plt.subplots(figsize=(12, 7))
+        ax.text(0.5, 0.5, "Não há dados de pagamento ou inadimplência registrados para o período.", horizontalalignment='center', verticalalignment='center', fontsize=12, color='gray')
+        ax.axis('off')
+        return gerar_grafico(fig, ax, title='Status de Pagamento por Mês')
+
+    # Ordenar os meses e mapeia os nomes
+    meses_com_dados_numericos = contagem_mensal.index.tolist()
+    meses_ordenados_nomes = [meses_nomes[m] for m in sorted(meses_com_dados_numericos)]
+    contagem_mensal.index = contagem_mensal.index.map(meses_nomes)
+
+    fig, ax = plt.subplots(figsize=(14, 7))
+    
+    contagem_mensal.loc[:, ['Em Dia', 'Inadimplente']].plot(kind='bar', ax=ax, color={'Em Dia': 'lightgreen', 'Inadimplente': 'salmon'}, width=0.8)
+    
+    ax.set_title('Status de Pagamento Mensal de Mensalistas', fontsize=16)
+    ax.set_xlabel('Mês', fontsize=12)
+    ax.set_ylabel('Número de Mensalistas', fontsize=12)
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    ax.set_xticklabels(meses_ordenados_nomes, rotation=45, ha='right')
+    ax.legend(title='Status', fontsize=10, title_fontsize=12)
+
+    for container in ax.containers:
+        for bar in container:
+            height = bar.get_height()
+            if height > 0:
+                ax.annotate(f'{int(height)}', 
+                            xy=(bar.get_x() + bar.get_width() / 2, height), 
+                            xytext=(0, 3),
+                            textcoords="offset points",
+                            ha='center', va='bottom',
+                            fontsize=9, color='black')
+
+    img_stream = io.BytesIO()
+    fig.savefig(img_stream, format='png', bbox_inches='tight')
+    img_stream.seek(0)
+    img_base64 = base64.b64encode(img_stream.read()).decode('utf-8')
+    plt.close(fig)
+    return img_base64
+
 
 # Função principal para realizar toda a análise de dados
 def realizar_analise_completa():
@@ -213,16 +286,16 @@ def realizar_analise_completa():
                 ax_media_geral.bar(x=['Média Geral'], height=[media_geral_valor], color='lightgreen')
                 ax_media_geral.set_ylim(0, media_geral_valor * 1.2 if media_geral_valor > 0 else 1)
                 grafico_media_geral = gerar_grafico(fig_media_geral, ax_media_geral,
-                                                    title='Média de Duração Geral', xlabel='', ylabel='Média de Duração (horas)',
-                                                    show_values_on_bars=True)
+                                                     title='Média de Duração Geral', xlabel='', ylabel='Média de Duração (horas)',
+                                                     show_values_on_bars=True)
 
             # 3. Histograma da Duração de Permanência
             if not df_estacionamento_tratado['Duracao'].dropna().empty:
                 fig_hist, ax_hist = plt.subplots(figsize=(10, 6))
                 sns.histplot(df_estacionamento_tratado['Duracao'], bins=20, kde=True, ax=ax_hist, color='purple')
                 grafico_histograma_duracao = gerar_grafico(fig_hist, ax_hist,
-                                                           title='Histograma da Duração de Permanência',
-                                                           xlabel='Duração (horas)', ylabel='Frequência')
+                                                            title='Histograma da Duração de Permanência',
+                                                            xlabel='Duração (horas)', ylabel='Frequência')
 
             # 4. Box Plot da Duração por Mês
             if not df_estacionamento_tratado['Duracao'].dropna().empty and 'Mes' in df_estacionamento_tratado.columns:
@@ -231,8 +304,8 @@ def realizar_analise_completa():
                 ax_box_mes.set_xlabel('Mês')
                 ax_box_mes.set_ylabel('Duração (horas)')
                 grafico_boxplot_duracao_mes = gerar_grafico(fig_box_mes, ax_box_mes,
-                                                           title='Box Plot da Duração por Mês',
-                                                           xlabel='Mês', ylabel='Duração (horas)')
+                                                            title='Box Plot da Duração por Mês',
+                                                            xlabel='Mês', ylabel='Duração (horas)')
 
             # 5. Mapa de Calor da Duração Média por Hora do Dia e Dia da Semana
             if not df_estacionamento_tratado.empty and 'Hora_Entrada' in df_estacionamento_tratado.columns and 'Dia_Semana' in df_estacionamento_tratado.columns:
@@ -269,6 +342,7 @@ def realizar_analise_completa():
     pagamentos_msg_erro = None
     df_pagamentos_tratado = pd.DataFrame()
     grafico_status_pagamento = None
+    grafico_status_pagamento_por_mes = None
     total_registros_pagamentos = 0
 
     try:
@@ -285,6 +359,7 @@ def realizar_analise_completa():
             pagamentos_msg_erro = "Erro: Coluna 'Status_Pagamento' ausente em 'pagamentos_placas.csv' após tratamento."
         else:
             grafico_status_pagamento = gerar_grafico_status_pagamento(df_pagamentos_tratado)
+            grafico_status_pagamento_por_mes = gerar_grafico_status_pagamento_por_mes(df_pagamentos_tratado)
 
         caminho_csv_pagamentos_tratado = os.path.join(script_dir, 'dataset', 'pagamentos_placas_tratado.csv')
         print(f"Salvando o arquivo CSV tratado em: {caminho_csv_pagamentos_tratado}")
@@ -295,6 +370,11 @@ def realizar_analise_completa():
         ax.axis('off')
         grafico_status_pagamento = gerar_grafico(fig, ax, title='Status de Pagamento dos Mensalistas')
 
+        fig_inad_mes, ax_inad_mes = plt.subplots(figsize=(12, 7))
+        ax_inad_mes.text(0.5, 0.5, "Sem dados para o gráfico de status de pagamento por mês", horizontalalignment='center', verticalalignment='center', fontsize=12, color='gray')
+        ax_inad_mes.axis('off')
+        grafico_status_pagamento_por_mes = gerar_grafico(fig_inad_mes, ax_inad_mes, title='Status de Pagamento por Mês')
+
 
     return {
         'total_registros_estacionamento': total_registros_estacionamento,
@@ -302,12 +382,12 @@ def realizar_analise_completa():
         'estacionamento_msg_erro': estacionamento_msg_erro,
         'pagamentos_msg_erro': pagamentos_msg_erro
     }, grafico_dia_semana, grafico_media_geral, grafico_histograma_duracao, grafico_boxplot_duracao_mes, \
-       grafico_heatmap_duracao, grafico_status_pagamento
+        grafico_heatmap_duracao, grafico_status_pagamento, grafico_status_pagamento_por_mes
 
 @app.route('/')
 def index():
     estatisticas, grafico_dia_semana, grafico_media_geral, grafico_histograma_duracao, grafico_boxplot_duracao_mes, \
-    grafico_heatmap_duracao, grafico_status_pagamento = realizar_analise_completa()
+    grafico_heatmap_duracao, grafico_status_pagamento, grafico_status_pagamento_por_mes = realizar_analise_completa()
 
     return render_template('index.html',
         estatisticas=estatisticas,
@@ -316,8 +396,10 @@ def index():
         grafico_histograma_duracao=grafico_histograma_duracao,
         grafico_boxplot_duracao_mes=grafico_boxplot_duracao_mes,
         grafico_heatmap_duracao=grafico_heatmap_duracao,
-        grafico_status_pagamento=grafico_status_pagamento
+        grafico_status_pagamento=grafico_status_pagamento,
+        grafico_status_pagamento_por_mes=grafico_status_pagamento_por_mes
     )
 
 if __name__ == '__main__':
     app.run(debug=True)
+    
