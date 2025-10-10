@@ -112,14 +112,28 @@ Abaixo, algumas imagens dos gráficos gerados pelo aplicativo:
 *Início de dashboard e KPIs*
 ![resultado](imagens/resultados_1.png)
 
+Com o KPIs pode-se obter um panorama geral dos dados fornecidos dos dois arquivos CSVs. O arquivo csv_estacionamento que consiste na entrada e saída dos carros com sua data, marca do carro e modelo. No outro arquivo pagamento_placas, mostra os mensalistas que contém uma coluna referente a placa, data que deve ser pago e a data que foi pago.
+Os gráfico de 1 a 5 são referentes ao arquivo CSV csv_estacionamento e os gráficos 6 e 7 são referentes ao arquivo CSV pagamento_placas.
+
 *Gráficos 1, 2: Média de Duração por Dia da Semana e Média de Duração Geral*
 ![resultado](imagens/resultados_2.png)
+
+No Primeiro gráfico que é a média da duração em relação a semana é possível obter um panorama, em qual dia da semana a média é menor e maior.
+No segundo gráfico mostra a média geral contando todos os dias da semana. E com esse gráfico é possível verificar que sábado é o único dia que fica abaixo da média geral.
 
 *Gráficos 3, 4: Histograma da Duração de Permanência e Box Plot da Duração por Mês*
 ![resultado](imagens/resultados_3.png)
 
+No terceiro gráfico é possível ver a quantidade de veículos estacionados em relação ao tempo de permanência deles.
+No quarto gráfico é a permanência em relação a duração do mês.
+
 *Gráfico 5: Mapa de Calor da Duração Média*
 ![resultado](imagens/resultados_4.png)
 
-*Gráficos 6: Gráfico de Setores de Status de Pagamento dos Mensalistas*
+No quinto gráfico é um mapa de calor que mostra a duração de permanência em relação ao horário de entrada e com isso pode-se observar que o período da manhã é o período que os veículos permanecem por mais tempo (mais de 10 horas).
+
+*Gráficos 6, 7: Gráfico de Setores de Status de Pagamento dos Mensalistas e o Gráfico de Barras de Status de Pagamento dos Mensalistas*
 ![resultado](imagens/resultados_5.png)
+
+No sexto gráfico mostra a quantidade de mensalistas que estão com o pagamento atrasado e o pagamento em dia.
+No sétimo gráfico é possível ver se os mensalistas estão em dia ou atrasado, mas em relação ao mês.
