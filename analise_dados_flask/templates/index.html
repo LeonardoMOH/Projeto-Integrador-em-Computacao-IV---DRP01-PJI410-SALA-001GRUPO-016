@@ -191,29 +191,41 @@
 
             {# -- Gráfico 5: Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana -- #}
             <div class="chart">
-                <h3>Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana</h3>
+                <h3>Duração Média por Hora de Entrada e Dia da Semana</h3>
                 {% if grafico_heatmap_duracao %}
                     <img src="data:image/png;base64,{{ grafico_heatmap_duracao }}" alt="Mapa de Calor da Duração">
                 {% else %}
                     <p class="error-message">Não foi possível gerar o Mapa de Calor da Duração Média.</p>
                 {% endif %}
             </div>
+            
+            {# -- Gráfico 6: Padrões de Estacionamento (K-Means) -- #}
+            <div class="chart">
+                <h3>Padrões de Duração de Estacionamento (K-Means)</h3>
+                {% if grafico_kmeans_estacionamento %}
+                    <img src="data:image/png;base64,{{ grafico_kmeans_estacionamento }}" alt="Gráfico de Agrupamento K-Means">
+                {% else %}
+                    <p class="error-message">Não foi possível gerar o Gráfico de Padrões de Estacionamento (K-Means).</p>
+                {% endif %}
+            </div>
         </div>
 
         <h2 class="section-title">Análise de Pagamentos (pagamentos_placas.csv)</h2>
         <div class="charts-container">
-            {# -- Gráfico 6: Status de Pagamento (Setores) -- #}
+            {# -- Gráfico 7: Status de Pagamento (Setores) -- #}
             <div class="chart">
-                <h3>Status de Pagamento dos Mensalistas (Geral)</h3> {% if grafico_status_pagamento %}
+                <h3>Status de Pagamento dos Mensalistas (Geral)</h3>
+                {% if grafico_status_pagamento %}
                     <img src="data:image/png;base64,{{ grafico_status_pagamento }}" alt="Gráfico de Status de Pagamento (Inadimplentes vs. Em Dia)">
                 {% else %}
                     <p class="error-message">Não foi possível gerar o Gráfico de Status de Pagamento.</p>
                 {% endif %}
             </div>
 
-            {# --- Gráfico 7: Status de Pagamento por Mês --- #}
+            {# --- Gráfico 8: Status de Pagamento por Mês --- #}
             <div class="chart">
-                <h3>Status de Pagamento Mensal de Mensalistas</h3> {% if grafico_status_pagamento_por_mes %}
+                <h3>Status de Pagamento Mensal de Mensalistas</h3>
+                {% if grafico_status_pagamento_por_mes %}
                     <img src="data:image/png;base64,{{ grafico_status_pagamento_por_mes }}" alt="Gráfico de Status de Pagamento por Mês">
                 {% else %}
                     <p class="error-message">Não foi possível gerar o Gráfico de Status de Pagamento por Mês.</p>

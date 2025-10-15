@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import io
 import base64
-from datetime import datetime, date
+from datetime import datetime, date, time, timedelta
 from flask import Flask, render_template
 import csv
 import os
@@ -11,6 +11,10 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 
 # Configuração da aplicação Flask
 app = Flask(__name__)
@@ -21,7 +25,16 @@ def formatar_duracao_numerica(td):
         return np.nan
     return td.total_seconds() / 3600
 
-# Função para o tratamento de dados (ajustada para extrair o mês e dia da semana)
+# Função para categorizar o período do dia (será usada para agrupar os resultados de ocupação horária)
+def categorizar_periodo_agrupamento(hora_int):
+    if 6 <= hora_int < 12:
+        return 'Manhã'
+    elif 12 <= hora_int < 18:
+        return 'Tarde'
+    else: # 18:00 até 05:59 do dia seguinte
+        return 'Noite'
+
+# Função para o tratamento de dados
 def tratar_dados_estacionamento(df):
     df['Entrada_Completa'] = pd.to_datetime(df['Data'] + ' ' + df['Entrada'], format='%d/%m/%Y %H:%M', errors='coerce')
     df['Saida_Completa'] = pd.to_datetime(df['Data'] + ' ' + df['Saida'], format='%d/%m/%Y %H:%M', errors='coerce')
@@ -31,54 +44,40 @@ def tratar_dados_estacionamento(df):
     df['Marca'], df['Modelo'] = df['Marca/Modelo'].str.split('/', expand=True)
     df['Duracao'] = df['Duracao_temp'].apply(formatar_duracao_numerica)
     df['Mes'] = pd.to_datetime(df['Data'], format='%d/%m/%Y', errors='coerce').dt.month
-
-    # Extrair hora de entrada para o mapa de calor
     df['Hora_Entrada'] = df['Entrada_Completa'].dt.hour
-
     df['Dia_Semana'] = pd.to_datetime(df['Data'], format='%d/%m/%Y', errors='coerce').dt.day_name()
-
     df.dropna(subset=['Duracao', 'Mes', 'Dia_Semana', 'Hora_Entrada'], inplace=True)
-
-    print("\n--- Debug Tratamento de Dados Estacionamento ---")
-    print(f"df_tratado após tratamento ({len(df)} linhas):\n", df.head())
-    print("------------------------------------------------\n")
-
+    
+    # print("\n--- Debug Tratamento de Dados Estacionamento ---")
+    # print(f"df_tratado após tratamento ({len(df)} linhas):\n", df.head())
+    # print("------------------------------------------------\n")
     return df
 
 # --- Função para tratamento de dados de pagamento ---
 def tratar_dados_pagamento(df_pagamentos):
     df_pagamentos['Data_Limite_Pagamento_DT'] = pd.to_datetime(df_pagamentos['Data do Pagamento'], format='%d/%m/%Y', errors='coerce')
     df_pagamentos['Dia_Efetuado'] = pd.to_numeric(df_pagamentos['Dia de Pagamento'], errors='coerce')
-
     df_pagamentos.dropna(subset=['Data_Limite_Pagamento_DT', 'Dia_Efetuado'], inplace=True)
-
     df_pagamentos['Dia_Limite'] = df_pagamentos['Data_Limite_Pagamento_DT'].dt.day
-    
-    # Adicionar coluna de Mês para análise mensal de inadimplência
     df_pagamentos['Mes'] = df_pagamentos['Data_Limite_Pagamento_DT'].dt.month
     df_pagamentos['Ano'] = df_pagamentos['Data_Limite_Pagamento_DT'].dt.year
-
 
     df_pagamentos['Status_Pagamento'] = df_pagamentos.apply(
         lambda row: 'Em Dia' if row['Dia_Efetuado'] <= row['Dia_Limite'] else 'Inadimplente',
         axis=1
     )
-
-    print("\n--- Debug Tratamento de Dados Pagamento (NOVA LÓGICA) ---")
-    print(f"df_pagamentos_tratado após tratamento ({len(df_pagamentos)} linhas):\n")
-    print(df_pagamentos[['Placa', 'Dia de Pagamento', 'Dia_Efetuado', 'Data do Pagamento', 'Dia_Limite', 'Mes', 'Ano', 'Status_Pagamento']].head())
-    print("Contagem de Status de Pagamento:\n", df_pagamentos['Status_Pagamento'].value_counts())
-    print("----------------------------------------------------------\n")
-
+    # print("\n--- Debug Tratamento de Dados Pagamento (NOVA LÓGICA) ---")
+    # print(f"df_pagamentos_tratado após tratamento ({len(df_pagamentos)} linhas):\n")
+    # print(df_pagamentos[['Placa', 'Dia de Pagamento', 'Dia_Efetuado', 'Data do Pagamento', 'Dia_Limite', 'Mes', 'Ano', 'Status_Pagamento']].head())
+    # print("Contagem de Status de Pagamento:\n", df_pagamentos['Status_Pagamento'].value_counts())
+    # print("----------------------------------------------------------\n")
     return df_pagamentos
 
 # Recebe a figura e o eixo (função auxiliar para gráficos gerais)
 def gerar_grafico(fig, ax, title="", xlabel="", ylabel="", show_values_on_bars=False, plot_type='bar', data=None, labels=None, colors=None, autopct=None):
     if plot_type == 'bar':
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
         ax.set_title(title)
-        ax.grid(axis='y', linestyle='--')
+        ax.grid(axis='y', linestyle='--', alpha=0.7)
 
         if show_values_on_bars:
             if hasattr(ax, 'patches') and ax.patches:
@@ -178,26 +177,21 @@ def gerar_grafico_status_pagamento_por_mes(df_pagamentos):
         7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
     }
 
-    # Contagem de status por mês
     contagem_mensal = df_pagamentos.groupby(['Mes', 'Status_Pagamento']).size().unstack(fill_value=0)
     
-    # Garantir que ambos os status existam, mesmo que com zero em alguns meses
     for status in ['Em Dia', 'Inadimplente']:
         if status not in contagem_mensal.columns:
             contagem_mensal[status] = 0
 
-    # Adiciona coluna de total mensal para filtrar meses sem dados
     contagem_mensal['Total_Mensal'] = contagem_mensal[['Em Dia', 'Inadimplente']].sum(axis=1)
     contagem_mensal = contagem_mensal[contagem_mensal['Total_Mensal'] > 0].drop(columns=['Total_Mensal'])
 
-    # Se não houver dados após o filtro, gera um gráfico vazio
     if contagem_mensal.empty:
         fig, ax = plt.subplots(figsize=(12, 7))
         ax.text(0.5, 0.5, "Não há dados de pagamento ou inadimplência registrados para o período.", horizontalalignment='center', verticalalignment='center', fontsize=12, color='gray')
         ax.axis('off')
         return gerar_grafico(fig, ax, title='Status de Pagamento por Mês')
 
-    # Ordenar os meses e mapeia os nomes
     meses_com_dados_numericos = contagem_mensal.index.tolist()
     meses_ordenados_nomes = [meses_nomes[m] for m in sorted(meses_com_dados_numericos)]
     contagem_mensal.index = contagem_mensal.index.map(meses_nomes)
@@ -219,7 +213,7 @@ def gerar_grafico_status_pagamento_por_mes(df_pagamentos):
             if height > 0:
                 ax.annotate(f'{int(height)}', 
                             xy=(bar.get_x() + bar.get_width() / 2, height), 
-                            xytext=(0, 3),
+                            xytext=(0, 3), 
                             textcoords="offset points",
                             ha='center', va='bottom',
                             fontsize=9, color='black')
@@ -231,6 +225,50 @@ def gerar_grafico_status_pagamento_por_mes(df_pagamentos):
     plt.close(fig)
     return img_base64
 
+# --- Função para gerar gráfico de Agrupamento (K-Means) ---
+def gerar_grafico_kmeans_estacionamento(df_estacionamento):
+    # Selecionar as features para o agrupamento
+    features = ['Duracao', 'Hora_Entrada']
+    df_cluster = df_estacionamento[features].copy()
+    df_cluster.dropna(inplace=True)
+
+    if df_cluster.empty or len(df_cluster) < 2:
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.text(0.5, 0.5, "Dados insuficientes para o agrupamento K-Means", horizontalalignment='center', verticalalignment='center', fontsize=12, color='gray')
+        ax.axis('off')
+        return gerar_grafico(fig, ax, title='Padrões de Duração de Estacionamento (K-Means)')
+
+    # Escalar os dados
+    scaler = StandardScaler()
+    scaled_features = scaler.fit_transform(df_cluster)
+    
+    # K=3 com o algoritmo K-Means
+    n_clusters = 3 
+
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+    df_cluster['Cluster'] = kmeans.fit_predict(scaled_features)
+
+    fig, ax = plt.subplots(figsize=(12, 7))
+    sns.scatterplot(x='Hora_Entrada', y='Duracao', hue='Cluster', data=df_cluster, 
+                    palette='viridis', s=100, alpha=0.7, ax=ax)
+    
+    # Adicionar os centroides dos clusters
+    centroids = scaler.inverse_transform(kmeans.cluster_centers_)
+    ax.scatter(centroids[:, 1], centroids[:, 0], marker='X', s=200, color='red', label='Centroides', edgecolor='black')
+
+
+    ax.set_title(f'Padrões de Duração de Estacionamento (K-Means, K={n_clusters})', fontsize=16)
+    ax.set_xlabel('Hora de Entrada', fontsize=12)
+    ax.set_ylabel('Duração (horas)', fontsize=12)
+    ax.grid(True, linestyle='--', alpha=0.6)
+    ax.legend(title='Cluster', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    img_stream = io.BytesIO()
+    fig.savefig(img_stream, format='png', bbox_inches='tight')
+    img_stream.seek(0)
+    img_base64 = base64.b64encode(img_stream.read()).decode('utf-8')
+    plt.close(fig)
+    return img_base64
 
 # Função principal para realizar toda a análise de dados
 def realizar_analise_completa():
@@ -247,6 +285,8 @@ def realizar_analise_completa():
     grafico_histograma_duracao = None
     grafico_boxplot_duracao_mes = None
     grafico_heatmap_duracao = None
+    grafico_ocupacao_periodo = None
+    grafico_kmeans_estacionamento = None
 
     try:
         df_estacionamento = pd.read_csv(caminho_csv_estacionamento, delimiter=';')
@@ -258,8 +298,14 @@ def realizar_analise_completa():
 
     if estacionamento_msg_erro is None and not df_estacionamento_tratado.empty:
         total_registros_estacionamento = len(df_estacionamento_tratado)
-        if 'Duracao' not in df_estacionamento_tratado.columns or 'Mes' not in df_estacionamento_tratado.columns or 'Dia_Semana' not in df_estacionamento_tratado.columns or 'Hora_Entrada' not in df_estacionamento_tratado.columns:
-            estacionamento_msg_erro = "Erro: Colunas essenciais ausentes em 'csv_estacionamento.csv' após tratamento."
+        # Verificar se as colunas essenciais para calculo de ocupacao estão presentes
+        if 'Duracao' not in df_estacionamento_tratado.columns or \
+           'Mes' not in df_estacionamento_tratado.columns or \
+           'Dia_Semana' not in df_estacionamento_tratado.columns or \
+           'Hora_Entrada' not in df_estacionamento_tratado.columns or \
+           'Entrada_Completa' not in df_estacionamento_tratado.columns or \
+           'Saida_Completa' not in df_estacionamento_tratado.columns:
+            estacionamento_msg_erro = "Erro: Colunas essenciais ausentes em 'csv_estacionamento.csv' após tratamento para calcular ocupação."
         else:
             dias_semana_portugues = {
                 'Monday': 'Segunda', 'Tuesday': 'Terça', 'Wednesday': 'Quarta',
@@ -307,7 +353,7 @@ def realizar_analise_completa():
                                                             title='Box Plot da Duração por Mês',
                                                             xlabel='Mês', ylabel='Duração (horas)')
 
-            # 5. Mapa de Calor da Duração Média por Hora do Dia e Dia da Semana
+            # 5. Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana
             if not df_estacionamento_tratado.empty and 'Hora_Entrada' in df_estacionamento_tratado.columns and 'Dia_Semana' in df_estacionamento_tratado.columns:
                 df_heatmap = df_estacionamento_tratado.pivot_table(index='Hora_Entrada', columns='Dia_Semana', values='Duracao', aggfunc='mean')
                 df_heatmap.columns = df_heatmap.columns.map(dias_semana_portugues)
@@ -319,6 +365,11 @@ def realizar_analise_completa():
                 ax_heatmap.set_xlabel('Dia da Semana')
                 ax_heatmap.set_ylabel('Hora de Entrada')
                 grafico_heatmap_duracao = gerar_grafico(fig_heatmap, ax_heatmap, title='Duração Média por Hora de Entrada e Dia da Semana', xlabel='Dia da Semana', ylabel='Hora de Entrada')
+            
+            # 6. Agrupamento K-Means (Gráfico Machine Learning)
+            if 'Duracao' in df_estacionamento_tratado.columns and 'Hora_Entrada' in df_estacionamento_tratado.columns:
+                grafico_kmeans_estacionamento = gerar_grafico_kmeans_estacionamento(df_estacionamento_tratado)
+
 
         caminho_csv_estacionamento_tratado = os.path.join(script_dir, 'dataset', 'csv_estacionamento_tratado.csv')
         print(f"Salvando o arquivo CSV tratado em: {caminho_csv_estacionamento_tratado}")
@@ -335,7 +386,8 @@ def realizar_analise_completa():
         grafico_histograma_duracao = get_empty_plot('Histograma da Duração de Permanência')
         grafico_boxplot_duracao_mes = get_empty_plot('Box Plot da Duração por Mês')
         grafico_heatmap_duracao = get_empty_plot('Duração Média por Hora de Entrada e Dia da Semana')
-
+        grafico_ocupacao_periodo = get_empty_plot('Ocupação Média por Período do Dia')
+        grafico_kmeans_estacionamento = get_empty_plot('Padrões de Duração de Estacionamento (K-Means)')
 
     # --- Análise do pagamentos_placas.csv ---
     caminho_csv_pagamentos = os.path.join(script_dir, 'dataset', 'pagamentos_placas.csv')
@@ -382,12 +434,14 @@ def realizar_analise_completa():
         'estacionamento_msg_erro': estacionamento_msg_erro,
         'pagamentos_msg_erro': pagamentos_msg_erro
     }, grafico_dia_semana, grafico_media_geral, grafico_histograma_duracao, grafico_boxplot_duracao_mes, \
-        grafico_heatmap_duracao, grafico_status_pagamento, grafico_status_pagamento_por_mes
+        grafico_heatmap_duracao, grafico_ocupacao_periodo, grafico_kmeans_estacionamento, grafico_status_pagamento, \
+        grafico_status_pagamento_por_mes
 
 @app.route('/')
 def index():
     estatisticas, grafico_dia_semana, grafico_media_geral, grafico_histograma_duracao, grafico_boxplot_duracao_mes, \
-    grafico_heatmap_duracao, grafico_status_pagamento, grafico_status_pagamento_por_mes = realizar_analise_completa()
+    grafico_heatmap_duracao, grafico_ocupacao_periodo, grafico_kmeans_estacionamento, grafico_status_pagamento, \
+    grafico_status_pagamento_por_mes = realizar_analise_completa()
 
     return render_template('index.html',
         estatisticas=estatisticas,
@@ -396,10 +450,11 @@ def index():
         grafico_histograma_duracao=grafico_histograma_duracao,
         grafico_boxplot_duracao_mes=grafico_boxplot_duracao_mes,
         grafico_heatmap_duracao=grafico_heatmap_duracao,
+        grafico_ocupacao_periodo=grafico_ocupacao_periodo,
+        grafico_kmeans_estacionamento=grafico_kmeans_estacionamento,
         grafico_status_pagamento=grafico_status_pagamento,
         grafico_status_pagamento_por_mes=grafico_status_pagamento_por_mes
     )
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
