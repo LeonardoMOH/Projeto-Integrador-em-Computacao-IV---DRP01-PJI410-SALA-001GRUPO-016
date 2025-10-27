@@ -32,7 +32,6 @@ Implementação de análise de dados que são gerados pelo fluxo diário de veí
 
 Os dados acumulados no registro de movimentações diárias de veículos automotores em um estacionamento de uma instituição religiosa não têm sido aproveitados, tornandose apenas armazenamento de informações quase obsoletas. Tais dados poderão ser utilizados de forma estratégica para a tomada de decisões e melhorias operacionais, além de possibilitarem uma visão clara e objetiva dos acontecimentos. Este estacionamento é gratuito para membros, porém, outras pessoas procuram a entidade para se tornarem mensalistas. Isso acontece porque a localização da organização é privilegiada em relação ao acesso a transportes públicos — próxima à estação da CPTM e na rota de ônibus executivos — ou seja, é um local onde se pode deixar veículos em segurança e direcionar-se à capital para o trabalho.
 
-
 ## Objetivo
 
 Transformar registros operacionais em informações estratégicas, permitindo: Identificação de horários de pico e períodos de baixa demanda; Monitoramento da rotatividade e tempo médio de permanência; Classificação de perfis de usuários inadimplentes; Detecção de comportamentos atípicos ou recorrentes; Apoio à tomada de decisões para melhorias operacionais. Também faz parte do objetivo cumprir, por meio deste projeto, todos os requisitos da disciplina acadêmica.
@@ -72,8 +71,10 @@ Este é um aplicativo web simples construído com Flask para realizar a análise
     3.  **Histograma da Duração de Permanência:** Um histograma para visualizar a distribuição das durações de permanência.
     4.  **Box Plot da Duração por Mês:** Um box plot que mostra a distribuição da duração de permanência para cada mês.
     5.  **Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana:** Um mapa de calor que visualiza a duração média de permanência em diferentes horas do dia e dias da semana, identificando horários de pico ou padrões de uso.
-* **Análise Exploratória de Dados (EDA) para Pagamentos:** Gera o seguinte gráfico:
-    1.  **Gráfico de Status de Pagamento dos Mensalistas:** Um gráfico de setores (pizza) mostrando a proporção de mensalistas "Em Dia" e "Inadimplentes".
+    6.  **Padrões de Duração de Estacionamento (K-Means):** Um gráfico de dispersão que utiliza o algoritmo K-Means para agrupar veículos com base na duração da permanência e hora de entrada, revelando diferentes perfis de uso do estacionamento.
+* **Análise Exploratória de Dados (EDA) para Pagamentos:** Gera os seguintes gráficos:
+    1.  **Gráfico de Status de Pagamento dos Mensalistas (Geral):** Um gráfico de setores (pizza) mostrando a proporção de mensalistas "Em Dia" e "Inadimplentes".
+    2.  **Status de Pagamento Mensal de Mensalistas:** Um gráfico de barras que exibe a quantidade de mensalistas "Em Dia" e "Inadimplentes" por mês, permitindo a visualização da variação da adimplência ao longo do tempo.
 * **Visualização Web:** Apresenta todos os gráficos, KPIs e estatísticas de forma interativa e responsiva em um dashboard web.
 
 ## Detalhes do Código
@@ -82,15 +83,18 @@ Este é um aplicativo web simples construído com Flask para realizar a análise
 
 Este arquivo contém a lógica de backend do aplicativo Flask.
 
-* **Importações**: Carrega bibliotecas como `pandas`, `numpy`, `matplotlib`, `seaborn`, `flask`, `io`, `base64` para manipulação de dados, geração de gráficos e interface web.
+* **Importações**: Carrega bibliotecas como `pandas`, `numpy`, `matplotlib`, `seaborn`, `flask`, `io`, `base64`, `sklearn` para manipulação de dados, geração de gráficos, aprendizado de máquina e interface web.
 * **`formatar_duracao_numerica(td)`**: Função auxiliar que converte objetos `Timedelta` em duração em horas.
-* **`tratar_dados_estacionamento(df)`**: Pré-processa o DataFrame de estacionamento, calculando durações, extraindo componentes de data/hora (mês, dia da semana, hora de entrada) e tratando dados ausentes.
+* **`categorizar_periodo_do_dia(hora)`**: Classifica uma dada hora de entrada em 'Manhã', 'Tarde' ou 'Noite'.
+* **`tratar_dados_estacionamento(df)`**: Pré-processa o DataFrame de estacionamento, calculando durações, extraindo componentes de data/hora (mês, dia da semana, hora de entrada, período de entrada) e tratando dados ausentes.
 * **`tratar_dados_pagamento(df_pagamentos)`**: Pré-processa o DataFrame de pagamentos, calculando o `Status_Pagamento` baseado na data limite e dia de pagamento.
 * **`gerar_grafico(fig, ax, ...)`**: Função utilitária que salva uma figura Matplotlib em um `BytesIO` e a codifica em Base64 para ser incorporada diretamente no HTML.
+* **`gerar_grafico_kmeans_estacionamento(df_estacionamento)`**: Implementa o algoritmo K-Means para identificar padrões de uso do estacionamento com base na duração e hora de entrada, gerando um gráfico de dispersão com os clusters.
 * **`gerar_grafico_status_pagamento(df_pagamentos)`**: Função específica para criar o gráfico de setores de status de pagamento, incluindo lógica de cores e legendas.
+* **`gerar_grafico_status_pagamento_por_mes(df_pagamentos)`**: Gera um gráfico de barras que detalha o status de pagamento (Em Dia/Inadimplente) mês a mês.
 * **`realizar_analise_completa()`**: A função principal de análise de dados.
     * Carregamento e tratamento de `csv_estacionamento.csv` e `pagamentos_placas.csv`.
-    * Geração de todos os gráficos de estacionamento (5) e de pagamento (1).
+    * Geração de todos os gráficos de estacionamento (incluindo K-Means) e de pagamento.
     * Salvamento dos DataFrames tratados em arquivos CSV.
     * Retorna um dicionário com estatísticas (total de registros) e as strings Base64 de todos os gráficos.
 * **`@app.route('/')` (função `index()`):** A rota principal do aplicativo. Chama `realizar_analise_completa()` e renderiza o template `index.html`, passando todas as estatísticas e gráficos para exibição.
@@ -112,28 +116,30 @@ Abaixo, algumas imagens dos gráficos gerados pelo aplicativo:
 *Início de dashboard e KPIs*
 ![resultado](imagens/resultados_1.png)
 
-Com o KPIs pode-se obter um panorama geral dos dados fornecidos dos dois arquivos CSVs. O arquivo csv_estacionamento que consiste na entrada e saída dos carros com sua data, marca do carro e modelo. No outro arquivo pagamento_placas, mostra os mensalistas que contém uma coluna referente a placa, data que deve ser pago e a data que foi pago.
-Os gráfico de 1 a 5 são referentes ao arquivo CSV csv_estacionamento e os gráficos 6 e 7 são referentes ao arquivo CSV pagamento_placas.
+Com os KPIs, pode-se obter um panorama geral dos dados fornecidos dos dois arquivos CSVs. O arquivo `csv_estacionamento` consiste na entrada e saída dos carros com sua data, marca do carro e modelo. O arquivo `pagamento_placas` mostra os mensalistas, contendo uma coluna referente à placa, data limite para pagamento e a data em que foi pago.
+Os gráficos de 1 a 6 são referentes ao arquivo CSV `csv_estacionamento` e os gráficos 7 e 8 são referentes ao arquivo CSV `pagamento_placas`.
 
 *Gráficos 1, 2: Média de Duração por Dia da Semana e Média de Duração Geral*
 ![resultado](imagens/resultados_2.png)
 
-No Primeiro gráfico que é a média da duração em relação a semana é possível obter um panorama, em qual dia da semana a média é menor e maior.
-No segundo gráfico mostra a média geral contando todos os dias da semana. E com esse gráfico é possível verificar que sábado é o único dia que fica abaixo da média geral.
+No Primeiro gráfico, que é a média da duração em relação à semana, é possível obter um panorama de qual dia da semana a média de permanência é menor e maior.
+No segundo gráfico, mostra a média geral contando todos os dias da semana. Com esse gráfico, é possível verificar que sábado é o único dia que fica abaixo da média geral.
 
 *Gráficos 3, 4: Histograma da Duração de Permanência e Box Plot da Duração por Mês*
 ![resultado](imagens/resultados_3.png)
 
-No terceiro gráfico é possível ver a quantidade de veículos estacionados em relação ao tempo de permanência deles.
-No quarto gráfico é a permanência em relação a duração do mês.
+No terceiro gráfico, é possível ver a quantidade de veículos estacionados em relação ao tempo de permanência deles.
+No quarto gráfico, é a permanência em relação à duração por mês.
 
-*Gráfico 5: Mapa de Calor da Duração Média*
+*Gráficos 5, 6: Mapa de Calor da Duração Média e Padrões de Duração de Estacionamento (K-Means)*
 ![resultado](imagens/resultados_4.png)
 
 No quinto gráfico é um mapa de calor que mostra a duração de permanência em relação ao horário de entrada e com isso pode-se observar que o período da manhã é o período que os veículos permanecem por mais tempo (mais de 10 horas).
 
-*Gráficos 6, 7: Gráfico de Setores de Status de Pagamento dos Mensalistas e o Gráfico de Barras de Status de Pagamento dos Mensalistas*
+No sexto gráfico, o agrupamento K-Means auxilia na identificação de perfis distintos de usuários do estacionamento com base em sua **duração de permanência** e **hora de entrada**. Cada cor representa um cluster diferente, indicando grupos de veículos com comportamentos semelhantes. Por exemplo, pode-se identificar um cluster de "estacionamentos rápidos em horários de pico" e outro de "permanências longas durante o dia de trabalho".
+
+*Gráficos 7, 8: Gráfico de Setores de Status de Pagamento dos Mensalistas e o Gráfico de Barras de Status de Pagamento Mensal*
 ![resultado](imagens/resultados_5.png)
 
-No sexto gráfico mostra a quantidade de mensalistas que estão com o pagamento atrasado e o pagamento em dia.
-No sétimo gráfico é possível ver se os mensalistas estão em dia ou atrasado, mas em relação ao mês.
+No sétimo gráfico, mostra a quantidade de mensalistas que estão com o pagamento atrasado e o pagamento em dia.
+No oitavo gráfico, é possível ver se os mensalistas estão em dia ou atrasado, mas em relação ao mês, permitindo identificar tendências de inadimplência.
