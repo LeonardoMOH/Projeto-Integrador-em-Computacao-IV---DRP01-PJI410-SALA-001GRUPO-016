@@ -1,237 +1,270 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Análise de Estacionamento e Pagamentos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Databay - Análise de Estacionamento</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
             background-color: #f4f7f6;
             color: #333;
-            text-align: center;
+            line-height: 1.6;
         }
         .container {
+            width: 90%;
             max-width: 1200px;
-            margin: auto;
-            background-color: #fff;
+            margin: 20px auto;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 30px;
-        }
-        .section-title {
-            color: #2c3e50;
-            margin-top: 40px;
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
             margin-bottom: 20px;
-            font-size: 1.8em;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            display: inline-block;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
         }
-
-        /* --- KPIs --- */
-        .kpi-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 30px;
-            margin-top: 20px;
-            margin-bottom: 40px;
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        header p {
+            font-size: 1.1em;
+            margin-top: 5px;
+            font-weight: 300;
+        }
+        .kpi-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
         .kpi-card {
             background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-            padding: 30px 40px;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             text-align: center;
-            flex: 1;
-            min-width: 280px;
-            max-width: 380px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border-left: 6px solid;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: center;
+            align-items: center;
         }
         .kpi-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
-        .kpi-title {
-            font-size: 1.2em;
+        .kpi-card h3 {
+            margin-top: 0;
             color: #555;
-            margin-bottom: 15px;
-            font-weight: normal;
+            font-size: 1.2em;
+            font-weight: 400;
         }
-        .kpi-value {
-            font-size: 3.2em;
-            font-weight: bold;
-            line-height: 1;
+        .kpi-card .value {
+            font-size: 2.8em;
+            font-weight: 700;
+            color: #007bff;
+            margin-top: 10px;
         }
+        .kpi-card.estacionamento .value { color: #28a745; /* Verde */ }
+        .kpi-card.pagamentos .value { color: #ffc107; /* Amarelo */ }
 
-        /* Cores específicas para cada KPI */
-        .kpi-estacionamento { border-left-color: #28a745; } /* Verde */
-        .kpi-estacionamento .kpi-value { color: #28a745; }
-        .kpi-pagamento { border-left-color: #007bff; } /* Azul */
-        .kpi-pagamento .kpi-value { color: #007bff; }
-        /* --- Fim dos Estilos para KPIs --- */
-
-        .error-message {
-            background-color: #ffebee;
-            color: #d32f2f;
-            border: 1px solid #d32f2f;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            text-align: left;
+        .section-title {
+            font-size: 2em;
+            color: #007bff;
+            margin-top: 40px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+            font-weight: 700;
         }
         .charts-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
-            margin-top: 30px;
+            margin-bottom: 30px;
         }
         .chart {
             background-color: #ffffff;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
             padding: 20px;
-            box-sizing: border-box;
-            width: 100%;
-            max-width: 550px;
-            transition: box-shadow 0.3s ease;
-        }
-        .chart:hover {
-            box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            overflow: hidden; /* Garante que o conteúdo não vaze */
         }
         .chart h3 {
-            color: #34495e;
-            margin-bottom: 15px;
+            color: #444;
             font-size: 1.3em;
+            margin-bottom: 15px;
+            font-weight: 400;
         }
         .chart img {
             max-width: 100%;
             height: auto;
+            display: block; /* Remove espaço extra abaixo da imagem */
+            margin: 0 auto; /* Centraliza a imagem */
+        }
+        .error-message {
+            color: #dc3545;
+            padding: 15px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
             border-radius: 5px;
+            margin-top: 15px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9em;
+            border-top: 1px solid #e9ecef;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Dashboard de Análise de Estacionamento e Pagamentos</h1>
+        <header>
+            <h1>Databay</h1>
+            <p>Sistema de Inteligência Analítica para Estacionamentos</p>
+        </header>
 
-        <h2 class="section-title">Estatísticas Gerais</h2>
-        <div class="kpi-container">
-            <div class="kpi-card kpi-estacionamento">
-                <div class="kpi-title">Total de Registros de Estacionamento</div>
-                <div class="kpi-value">{{ estatisticas.total_registros_estacionamento }}</div>
+        <section id="kpis">
+            <h2 class="section-title">Indicadores Chave de Performance (KPIs)</h2>
+            <div class="kpi-cards">
+                <div class="kpi-card estacionamento">
+                    <h3>Total de Registros de Estacionamento</h3>
+                    {% if estatisticas.estacionamento_msg_erro %}
+                        <p class="error-message">{{ estatisticas.estacionamento_msg_erro }}</p>
+                    {% else %}
+                        <div class="value">{{ estatisticas.total_registros_estacionamento }}</div>
+                    {% endif %}
+                </div>
+                <div class="kpi-card pagamentos">
+                    <h3>Total de Registros de Pagamento</h3>
+                    {% if estatisticas.pagamentos_msg_erro %}
+                        <p class="error-message">{{ estatisticas.pagamentos_msg_erro }}</p>
+                    {% else %}
+                        <div class="value">{{ estatisticas.total_registros_pagamentos }}</div>
+                    {% endif %}
+                </div>
             </div>
+        </section>
 
-            <div class="kpi-card kpi-pagamento">
-                <div class="kpi-title">Total de Registros de Pagamento</div>
-                <div class="kpi-value">{{ estatisticas.total_registros_pagamentos }}</div>
-            </div>
-        </div>
+        <section id="analise-estacionamento">
+            <h2 class="section-title">Análise de Dados de Estacionamento</h2>
+            <div class="charts-container">
+                {# -- Gráfico 1: Média de Duração por Dia da Semana -- #}
+                <div class="chart">
+                    <h3>Média de Duração por Dia da Semana</h3>
+                    {% if grafico_dia_semana %}
+                        <img src="data:image/png;base64,{{ grafico_dia_semana }}" alt="Gráfico de Média de Duração por Dia da Semana">
+                    {% else %}
+                        <p class="error-message">Não foi possível gerar o Gráfico de Média de Duração por Dia da Semana.</p>
+                    {% endif %}
+                </div>
 
-        {# Mensagens de erro para cada dataset #}
-        {% if estatisticas.estacionamento_msg_erro %}
-            <p class="error-message">{{ estatisticas.estacionamento_msg_erro }}</p>
-        {% endif %}
-        {% if estatisticas.pagamentos_msg_erro %}
-            <p class="error-message">{{ estatisticas.pagamentos_msg_erro }}</p>
-        {% endif %}
+                {# -- Gráfico 2: Média de Duração Geral -- #}
+                <div class="chart">
+                    <h3>Média de Duração Geral</h3>
+                    {% if grafico_media_geral %}
+                        <img src="data:image/png;base64,{{ grafico_media_geral }}" alt="Gráfico de Média de Duração Geral">
+                    {% else %}
+                        <p class="error-message">Não foi possível gerar o Gráfico de Média de Duração Geral.</p>
+                    {% endif %}
+                </div>
 
-        <h2 class="section-title">Análise de Estacionamento (csv_estacionamento.csv)</h2>
-        <div class="charts-container">
-            {# -- Gráfico 1: Média de Duração por Dia da Semana -- #}
-            <div class="chart">
-                <h3>Média de Duração por Dia da Semana</h3>
-                {% if grafico_dia_semana %}
-                    <img src="data:image/png;base64,{{ grafico_dia_semana }}" alt="Gráfico de Média de Duração por Dia da Semana">
-                {% else %}
-                    <p class="error-message">Não foi possível gerar o Gráfico de Média de Duração por Dia da Semana.</p>
-                {% endif %}
-            </div>
+                {# -- Gráfico 3: Histograma da Duração de Permanência -- #}
+                <div class="chart">
+                    <h3>Histograma da Duração de Permanência</h3>
+                    {% if grafico_histograma_duracao %}
+                        <img src="data:image/png;base64,{{ grafico_histograma_duracao }}" alt="Histograma da Duração de Permanência">
+                    {% else %}
+                        <p class="error-message">Não foi possível gerar o Histograma da Duração de Permanência.</p>
+                    {% endif %}
+                </div>
 
-            {# -- Gráfico 2: Média de Duração Geral -- #}
-            <div class="chart">
-                <h3>Média de Duração Geral</h3>
-                {% if grafico_media_geral %}
-                    <img src="data:image/png;base64,{{ grafico_media_geral }}" alt="Gráfico de Média de Duração Geral">
-                {% else %}
-                    <p class="error-message">Não foi possível gerar o Gráfico de Média de Duração Geral.</p>
-                {% endif %}
-            </div>
+                {# -- Gráfico 4: Box Plot da Duração por Mês -- #}
+                <div class="chart">
+                    <h3>Box Plot da Duração por Mês</h3>
+                    {% if grafico_boxplot_duracao_mes %}
+                        <img src="data:image/png;base64,{{ grafico_boxplot_duracao_mes }}" alt="Box Plot da Duração por Mês">
+                    {% else %}
+                        <p class="error-message">Não foi possível gerar o Box Plot da Duração por Mês.</p>
+                    {% endif %}
+                </div>
 
-            {# -- Gráfico 3: Histograma da Duração de Permanência -- #}
-            <div class="chart">
-                <h3>Histograma da Duração de Permanência</h3>
-                {% if grafico_histograma_duracao %}
-                    <img src="data:image/png;base64,{{ grafico_histograma_duracao }}" alt="Histograma da Duração">
-                {% else %}
-                    <p class="error-message">Não foi possível gerar o Histograma da Duração de Permanência.</p>
-                {% endif %}
-            </div>
+                {# -- Gráfico 5: Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana -- #}
+                <div class="chart">
+                    <h3>Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana</h3>
+                    {% if grafico_heatmap_duracao %}
+                        <img src="data:image/png;base64,{{ grafico_heatmap_duracao }}" alt="Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana">
+                    {% else %}
+                        <p class="error-message">Não foi possível gerar o Mapa de Calor da Duração Média.</p>
+                    {% endif %}
+                </div>
 
-            {# -- Gráfico 4: Box Plot da Duração por Mês -- #}
-            <div class="chart">
-                <h3>Box Plot da Duração por Mês</h3>
-                {% if grafico_boxplot_duracao_mes %}
-                    <img src="data:image/png;base64,{{ grafico_boxplot_duracao_mes }}" alt="Box Plot da Duração por Mês">
-                {% else %}
-                    <p class="error-message">Não foi possível gerar o Box Plot da Duração por Mês.</p>
-                {% endif %}
-            </div>
+                {# -- Gráfico 6: Padrões de Duração de Estacionamento (K-Means) -- #}
+                <div class="chart">
+                    <h3>Padrões de Duração de Estacionamento (K-Means)</h3>
+                    {% if grafico_kmeans_estacionamento %}
+                        <img src="data:image/png;base64,{{ grafico_kmeans_estacionamento }}" alt="Gráfico de Padrões de Duração de Estacionamento (K-Means)">
+                    {% else %}
+                        <p class="error-message">Não foi possível gerar o Gráfico de Padrões de Duração de Estacionamento (K-Means).</p>
+                    {% endif %}
+                </div>
 
-            {# -- Gráfico 5: Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana -- #}
-            <div class="chart">
-                <h3>Duração Média por Hora de Entrada e Dia da Semana</h3>
-                {% if grafico_heatmap_duracao %}
-                    <img src="data:image/png;base64,{{ grafico_heatmap_duracao }}" alt="Mapa de Calor da Duração">
-                {% else %}
-                    <p class="error-message">Não foi possível gerar o Mapa de Calor da Duração Média.</p>
-                {% endif %}
+                {# -- Gráfico 7: Atividade de Estacionamento por Dia da Semana (Lotação) -- #}
+                <div class="chart">
+                    <h3>Atividade de Estacionamento por Dia da Semana</h3>
+                    {% if grafico_lotacao_dia_semana %}
+                        <img src="data:image/png;base64,{{ grafico_lotacao_dia_semana }}" alt="Gráfico de Atividade de Estacionamento por Dia da Semana">
+                    {% else %}
+                        <p class="error-message">Não foi possível gerar o Gráfico de Atividade de Estacionamento por Dia da Semana.</p>
+                    {% endif %}
+                </div>
             </div>
-            
-            {# -- Gráfico 6: Padrões de Estacionamento (K-Means) -- #}
-            <div class="chart">
-                <h3>Padrões de Duração de Estacionamento (K-Means)</h3>
-                {% if grafico_kmeans_estacionamento %}
-                    <img src="data:image/png;base64,{{ grafico_kmeans_estacionamento }}" alt="Gráfico de Agrupamento K-Means">
-                {% else %}
-                    <p class="error-message">Não foi possível gerar o Gráfico de Padrões de Estacionamento (K-Means).</p>
-                {% endif %}
-            </div>
-        </div>
+        </section>
 
-        <h2 class="section-title">Análise de Pagamentos (pagamentos_placas.csv)</h2>
-        <div class="charts-container">
-            {# -- Gráfico 7: Status de Pagamento (Setores) -- #}
-            <div class="chart">
-                <h3>Status de Pagamento dos Mensalistas (Geral)</h3>
-                {% if grafico_status_pagamento %}
-                    <img src="data:image/png;base64,{{ grafico_status_pagamento }}" alt="Gráfico de Status de Pagamento (Inadimplentes vs. Em Dia)">
-                {% else %}
-                    <p class="error-message">Não foi possível gerar o Gráfico de Status de Pagamento.</p>
-                {% endif %}
-            </div>
+        <section id="analise-pagamentos">
+            <h2 class="section-title">Análise de Dados de Pagamentos</h2>
+            <div class="charts-container">
+                {# -- Gráfico 8: Gráfico de Setores de Status de Pagamento dos Mensalistas -- #}
+                <div class="chart">
+                    <h3>Status de Pagamento dos Mensalistas</h3>
+                    {% if grafico_status_pagamento %}
+                        <img src="data:image/png;base64,{{ grafico_status_pagamento }}" alt="Gráfico de Status de Pagamento dos Mensalistas">
+                    {% else %}
+                        <p class="error-message">Não foi possível gerar o Gráfico de Status de Pagamento dos Mensalistas.</p>
+                    {% endif %}
+                </div>
 
-            {# --- Gráfico 8: Status de Pagamento por Mês --- #}
-            <div class="chart">
-                <h3>Status de Pagamento Mensal de Mensalistas</h3>
-                {% if grafico_status_pagamento_por_mes %}
-                    <img src="data:image/png;base64,{{ grafico_status_pagamento_por_mes }}" alt="Gráfico de Status de Pagamento por Mês">
-                {% else %}
-                    <p class="error-message">Não foi possível gerar o Gráfico de Status de Pagamento por Mês.</p>
-                {% endif %}
+                {# -- Gráfico 9: Gráfico de Barras de Status de Pagamento por Mês -- #}
+                <div class="chart">
+                    <h3>Status de Pagamento Mensal de Mensalistas</h3>
+                    {% if grafico_status_pagamento_por_mes %}
+                        <img src="data:image/png;base64,{{ grafico_status_pagamento_por_mes }}" alt="Gráfico de Status de Pagamento por Mês">
+                    {% else %}
+                        <p class="error-message">Não foi possível gerar o Gráfico de Status de Pagamento Mensal.</p>
+                    {% endif %}
+                </div>
             </div>
-        </div>
+        </section>
+
+        <footer>
+            <p>&copy; {{ now.year }} Databay. Todos os direitos reservados.</p>
+            <p>Projeto Integrador em Computação IV - Univesp</p>
+        </footer>
     </div>
 </body>
 </html>

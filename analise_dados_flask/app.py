@@ -1,4 +1,3 @@
-# Importação de bibliotecas utilizadas no projeto
 import pandas as pd
 import numpy as np
 import io
@@ -34,26 +33,28 @@ def categorizar_periodo_agrupamento(hora_int):
     else: # 18:00 até 05:59 do dia seguinte
         return 'Noite'
 
-# Função para o tratamento de dados
+# Função para o tratamento de dados de estacionamento
 def tratar_dados_estacionamento(df):
     df['Entrada_Completa'] = pd.to_datetime(df['Data'] + ' ' + df['Entrada'], format='%d/%m/%Y %H:%M', errors='coerce')
     df['Saida_Completa'] = pd.to_datetime(df['Data'] + ' ' + df['Saida'], format='%d/%m/%Y %H:%M', errors='coerce')
+    
     df.dropna(subset=['Entrada_Completa', 'Saida_Completa'], inplace=True)
+    
     df.loc[df['Saida_Completa'] < df['Entrada_Completa'], 'Saida_Completa'] += pd.Timedelta(days=1)
+    
     df['Duracao_temp'] = df['Saida_Completa'] - df['Entrada_Completa']
     df['Marca'], df['Modelo'] = df['Marca/Modelo'].str.split('/', expand=True)
     df['Duracao'] = df['Duracao_temp'].apply(formatar_duracao_numerica)
     df['Mes'] = pd.to_datetime(df['Data'], format='%d/%m/%Y', errors='coerce').dt.month
     df['Hora_Entrada'] = df['Entrada_Completa'].dt.hour
+    
     df['Dia_Semana'] = pd.to_datetime(df['Data'], format='%d/%m/%Y', errors='coerce').dt.day_name()
+    
     df.dropna(subset=['Duracao', 'Mes', 'Dia_Semana', 'Hora_Entrada'], inplace=True)
     
-    # print("\n--- Debug Tratamento de Dados Estacionamento ---")
-    # print(f"df_tratado após tratamento ({len(df)} linhas):\n", df.head())
-    # print("------------------------------------------------\n")
     return df
 
-# --- Função para tratamento de dados de pagamento ---
+# Função para tratamento de dados de pagamento
 def tratar_dados_pagamento(df_pagamentos):
     df_pagamentos['Data_Limite_Pagamento_DT'] = pd.to_datetime(df_pagamentos['Data do Pagamento'], format='%d/%m/%Y', errors='coerce')
     df_pagamentos['Dia_Efetuado'] = pd.to_numeric(df_pagamentos['Dia de Pagamento'], errors='coerce')
@@ -66,11 +67,6 @@ def tratar_dados_pagamento(df_pagamentos):
         lambda row: 'Em Dia' if row['Dia_Efetuado'] <= row['Dia_Limite'] else 'Inadimplente',
         axis=1
     )
-    # print("\n--- Debug Tratamento de Dados Pagamento (NOVA LÓGICA) ---")
-    # print(f"df_pagamentos_tratado após tratamento ({len(df_pagamentos)} linhas):\n")
-    # print(df_pagamentos[['Placa', 'Dia de Pagamento', 'Dia_Efetuado', 'Data do Pagamento', 'Dia_Limite', 'Mes', 'Ano', 'Status_Pagamento']].head())
-    # print("Contagem de Status de Pagamento:\n", df_pagamentos['Status_Pagamento'].value_counts())
-    # print("----------------------------------------------------------\n")
     return df_pagamentos
 
 # Recebe a figura e o eixo (função auxiliar para gráficos gerais)
@@ -270,6 +266,64 @@ def gerar_grafico_kmeans_estacionamento(df_estacionamento):
     plt.close(fig)
     return img_base64
 
+# Função para calcular Lotação por Dia da Semana
+def calcular_lotacao_por_dia_semana(df_estacionamento):
+    if df_estacionamento.empty or 'Dia_Semana' not in df_estacionamento.columns:
+        return pd.Series(0, index=['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'])
+
+    # Mapear para português e garantir a ordem
+    dias_semana_portugues = {
+        'Monday': 'Segunda', 'Tuesday': 'Terça', 'Wednesday': 'Quarta',
+        'Thursday': 'Quinta', 'Friday': 'Sexta', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
+    }
+    df_estacionamento['Dia_Semana_PT'] = df_estacionamento['Dia_Semana'].map(dias_semana_portugues)
+
+    # Contar o número de entradas para cada dia da semana
+    lotacao_por_dia = df_estacionamento['Dia_Semana_PT'].value_counts()
+    
+    # Reindexar para garantir a ordem e preencher NaNs com 0 se algum dia não tiver dados
+    dias_ordenados = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+    lotacao_por_dia = lotacao_por_dia.reindex(dias_ordenados).fillna(0)
+    
+    return lotacao_por_dia
+
+# Função para gerar o gráfico da lotação por dia da semana
+def gerar_grafico_lotacao_por_dia_semana(lotacao_data):
+    if lotacao_data.empty or lotacao_data.sum() == 0:
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.text(0.5, 0.5, "Sem dados de lotação por dia da semana para gerar o gráfico", horizontalalignment='center', verticalalignment='center', fontsize=12, color='gray')
+        ax.axis('off')
+        return gerar_grafico(fig, ax, title='Atividade de Estacionamento por Dia da Semana')
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    lotacao_data.plot(kind='bar', ax=ax, color='lightcoral', width=0.7)
+
+    ax.set_title('Atividade de Estacionamento por Dia da Semana', fontsize=16)
+    ax.set_xlabel('Dia da Semana', fontsize=12)
+    ax.set_ylabel('Número de Entradas de Veículos', fontsize=12)
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    ax.set_xticklabels(lotacao_data.index, rotation=45, ha='right')
+
+    # Adicionar valores nas barras
+    for container in ax.containers:
+        for bar in container:
+            height = bar.get_height()
+            if height > 0:
+                ax.annotate(f'{int(height)}',
+                            xy=(bar.get_x() + bar.get_width() / 2, height),
+                            xytext=(0, 3),
+                            textcoords="offset points",
+                            ha='center', va='bottom',
+                            fontsize=10, color='black')
+
+    img_stream = io.BytesIO()
+    fig.savefig(img_stream, format='png', bbox_inches='tight')
+    img_stream.seek(0)
+    img_base64 = base64.b64encode(img_stream.read()).decode('utf-8')
+    plt.close(fig)
+    return img_base64
+
 # Função principal para realizar toda a análise de dados
 def realizar_analise_completa():
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -285,8 +339,8 @@ def realizar_analise_completa():
     grafico_histograma_duracao = None
     grafico_boxplot_duracao_mes = None
     grafico_heatmap_duracao = None
-    grafico_ocupacao_periodo = None
     grafico_kmeans_estacionamento = None
+    grafico_lotacao_dia_semana = None
 
     try:
         df_estacionamento = pd.read_csv(caminho_csv_estacionamento, delimiter=';')
@@ -298,83 +352,108 @@ def realizar_analise_completa():
 
     if estacionamento_msg_erro is None and not df_estacionamento_tratado.empty:
         total_registros_estacionamento = len(df_estacionamento_tratado)
-        # Verificar se as colunas essenciais para calculo de ocupacao estão presentes
-        if 'Duracao' not in df_estacionamento_tratado.columns or \
-           'Mes' not in df_estacionamento_tratado.columns or \
-           'Dia_Semana' not in df_estacionamento_tratado.columns or \
-           'Hora_Entrada' not in df_estacionamento_tratado.columns or \
-           'Entrada_Completa' not in df_estacionamento_tratado.columns or \
-           'Saida_Completa' not in df_estacionamento_tratado.columns:
-            estacionamento_msg_erro = "Erro: Colunas essenciais ausentes em 'csv_estacionamento.csv' após tratamento para calcular ocupação."
+        
+        # Mapeamento e ordem dos dias da semana
+        dias_semana_portugues = {
+            'Monday': 'Segunda', 'Tuesday': 'Terça', 'Wednesday': 'Quarta',
+            'Thursday': 'Quinta', 'Friday': 'Sexta', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
+        }
+        dias_ordenados = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+
+        # 1. Gráfico de Média de Duração por Dia da Semana
+        if 'Duracao' in df_estacionamento_tratado.columns and 'Dia_Semana' in df_estacionamento_tratado.columns and not df_estacionamento_tratado['Duracao'].dropna().empty:
+            media_por_dia = df_estacionamento_tratado.groupby('Dia_Semana')['Duracao'].mean()
+            
+            # Mapear para português e reindexar para ordenar
+            media_por_dia.index = media_por_dia.index.map(dias_semana_portugues)
+            media_por_dia = media_por_dia.reindex(dias_ordenados).dropna()
+
+            if not media_por_dia.empty:
+                fig_dia_semana, ax_dia_semana = plt.subplots(figsize=(10, 6))
+                media_por_dia.plot(kind='bar', color='skyblue', ax=ax_dia_semana)
+                ax_dia_semana.set_xticklabels(media_por_dia.index, rotation=45, ha='right')
+                ax_dia_semana.set_title('Média de Duração por Dia da Semana', fontsize=16)
+                ax_dia_semana.set_xlabel('Dia da Semana', fontsize=12)
+                ax_dia_semana.set_ylabel('Média de Duração (horas)', fontsize=12)
+                ax_dia_semana.grid(axis='y', linestyle='--', alpha=0.7)
+
+                # Adicionar valores nas barras
+                for p in ax_dia_semana.patches:
+                    ax_dia_semana.annotate(f"{p.get_height():.2f}", 
+                                           (p.get_x() + p.get_width() / 2., p.get_height()), 
+                                           ha='center', va='center', xytext=(0, 10), 
+                                           textcoords='offset points', fontsize=10)
+                
+                grafico_dia_semana = gerar_grafico(fig_dia_semana, ax_dia_semana)
+            else:
+                fig, ax = plt.subplots(figsize=(8, 6))
+                ax.text(0.5, 0.5, "Sem dados para o gráfico de Média de Duração por Dia da Semana", horizontalalignment='center', verticalalignment='center', fontsize=12, color='gray')
+                ax.axis('off')
+                grafico_dia_semana = gerar_grafico(fig, ax)
         else:
-            dias_semana_portugues = {
-                'Monday': 'Segunda', 'Tuesday': 'Terça', 'Wednesday': 'Quarta',
-                'Thursday': 'Quinta', 'Friday': 'Sexta', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
-            }
-            dias_ordenados = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.text(0.5, 0.5, "Sem dados para o gráfico de Média de Duração por Dia da Semana", horizontalalignment='center', verticalalignment='center', fontsize=12, color='gray')
+            ax.axis('off')
+            grafico_dia_semana = gerar_grafico(fig, ax)
 
-            # 1. Gráfico de Média de Duração por Dia da Semana
-            if not df_estacionamento_tratado['Duracao'].dropna().empty and 'Dia_Semana' in df_estacionamento_tratado.columns:
-                media_por_dia = df_estacionamento_tratado.groupby('Dia_Semana')['Duracao'].mean()
-                media_por_dia.index = media_por_dia.index.map(dias_semana_portugues)
-                media_por_dia = media_por_dia.reindex(dias_ordenados)
-                if not media_por_dia.dropna().empty:
-                    fig_dia_semana, ax_dia_semana = plt.subplots(figsize=(10, 6))
-                    media_por_dia.dropna().plot(kind='bar', color='skyblue', ax=ax_dia_semana)
-                    ax_dia_semana.set_xticklabels(media_por_dia.dropna().index, rotation=45, ha='right')
-                    grafico_dia_semana = gerar_grafico(fig_dia_semana, ax_dia_semana,
-                                                       title='Média de Duração por Dia da Semana', xlabel='Dia da Semana', ylabel='Média de Duração (horas)',
-                                                       show_values_on_bars=True)
-            # 2. Gráfico de Média de Duração Geral
-            if not df_estacionamento_tratado['Duracao'].dropna().empty:
-                media_geral_valor = df_estacionamento_tratado['Duracao'].mean()
-                fig_media_geral, ax_media_geral = plt.subplots(figsize=(4, 6))
-                ax_media_geral.bar(x=['Média Geral'], height=[media_geral_valor], color='lightgreen')
-                ax_media_geral.set_ylim(0, media_geral_valor * 1.2 if media_geral_valor > 0 else 1)
-                grafico_media_geral = gerar_grafico(fig_media_geral, ax_media_geral,
-                                                     title='Média de Duração Geral', xlabel='', ylabel='Média de Duração (horas)',
-                                                     show_values_on_bars=True)
 
-            # 3. Histograma da Duração de Permanência
-            if not df_estacionamento_tratado['Duracao'].dropna().empty:
-                fig_hist, ax_hist = plt.subplots(figsize=(10, 6))
-                sns.histplot(df_estacionamento_tratado['Duracao'], bins=20, kde=True, ax=ax_hist, color='purple')
-                grafico_histograma_duracao = gerar_grafico(fig_hist, ax_hist,
+        # 2. Gráfico de Média de Duração Geral
+        if not df_estacionamento_tratado['Duracao'].dropna().empty:
+            media_geral_valor = df_estacionamento_tratado['Duracao'].mean()
+            fig_media_geral, ax_media_geral = plt.subplots(figsize=(4, 6))
+            ax_media_geral.bar(x=['Média Geral'], height=[media_geral_valor], color='lightgreen')
+            ax_media_geral.set_ylim(0, media_geral_valor * 1.2 if media_geral_valor > 0 else 1)
+            grafico_media_geral = gerar_grafico(fig_media_geral, ax_media_geral,
+                                                    title='Média de Duração Geral', xlabel='', ylabel='Média de Duração (horas)',
+                                                    show_values_on_bars=True)
+
+        # 3. Histograma da Duração de Permanência
+        if not df_estacionamento_tratado['Duracao'].dropna().empty:
+            fig_hist, ax_hist = plt.subplots(figsize=(10, 6))
+            sns.histplot(df_estacionamento_tratado['Duracao'], bins=20, kde=True, ax=ax_hist, color='purple')
+            grafico_histograma_duracao = gerar_grafico(fig_hist, ax_hist,
                                                             title='Histograma da Duração de Permanência',
                                                             xlabel='Duração (horas)', ylabel='Frequência')
 
-            # 4. Box Plot da Duração por Mês
-            if not df_estacionamento_tratado['Duracao'].dropna().empty and 'Mes' in df_estacionamento_tratado.columns:
-                fig_box_mes, ax_box_mes = plt.subplots(figsize=(12, 6))
-                sns.boxplot(x='Mes', y='Duracao', data=df_estacionamento_tratado, ax=ax_box_mes, palette='Blues', hue='Mes', legend=False)
-                ax_box_mes.set_xlabel('Mês')
-                ax_box_mes.set_ylabel('Duração (horas)')
-                grafico_boxplot_duracao_mes = gerar_grafico(fig_box_mes, ax_box_mes,
+        # 4. Box Plot da Duração por Mês
+        if not df_estacionamento_tratado['Duracao'].dropna().empty and 'Mes' in df_estacionamento_tratado.columns:
+            fig_box_mes, ax_box_mes = plt.subplots(figsize=(12, 6))
+            sns.boxplot(x='Mes', y='Duracao', data=df_estacionamento_tratado, ax=ax_box_mes, palette='Blues', hue='Mes', legend=False)
+            ax_box_mes.set_xlabel('Mês')
+            ax_box_mes.set_ylabel('Duração (horas)')
+            grafico_boxplot_duracao_mes = gerar_grafico(fig_box_mes, ax_box_mes,
                                                             title='Box Plot da Duração por Mês',
                                                             xlabel='Mês', ylabel='Duração (horas)')
 
-            # 5. Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana
-            if not df_estacionamento_tratado.empty and 'Hora_Entrada' in df_estacionamento_tratado.columns and 'Dia_Semana' in df_estacionamento_tratado.columns:
-                df_heatmap = df_estacionamento_tratado.pivot_table(index='Hora_Entrada', columns='Dia_Semana', values='Duracao', aggfunc='mean')
-                df_heatmap.columns = df_heatmap.columns.map(dias_semana_portugues)
-                existent_ordered_days = [day for day in dias_ordenados if day in df_heatmap.columns]
-                df_heatmap = df_heatmap[existent_ordered_days]
-                fig_heatmap, ax_heatmap = plt.subplots(figsize=(12, 8))
-                sns.heatmap(df_heatmap, annot=True, fmt=".1f", cmap='YlGnBu', linewidths=.5, ax=ax_heatmap, cbar_kws={'label': 'Média de Duração (horas)'})
-                ax_heatmap.set_title('Duração Média por Hora de Entrada e Dia da Semana')
-                ax_heatmap.set_xlabel('Dia da Semana')
-                ax_heatmap.set_ylabel('Hora de Entrada')
-                grafico_heatmap_duracao = gerar_grafico(fig_heatmap, ax_heatmap, title='Duração Média por Hora de Entrada e Dia da Semana', xlabel='Dia da Semana', ylabel='Hora de Entrada')
-            
-            # 6. Agrupamento K-Means (Gráfico Machine Learning)
-            if 'Duracao' in df_estacionamento_tratado.columns and 'Hora_Entrada' in df_estacionamento_tratado.columns:
-                grafico_kmeans_estacionamento = gerar_grafico_kmeans_estacionamento(df_estacionamento_tratado)
+        # 5. Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana
+        if not df_estacionamento_tratado.empty and 'Hora_Entrada' in df_estacionamento_tratado.columns and 'Dia_Semana' in df_estacionamento_tratado.columns:
+            df_heatmap = df_estacionamento_tratado.pivot_table(index='Hora_Entrada', columns='Dia_Semana', values='Duracao', aggfunc='mean')
+            df_heatmap.columns = df_heatmap.columns.map(dias_semana_portugues)
+            existent_ordered_days = [day for day in dias_ordenados if day in df_heatmap.columns]
+            df_heatmap = df_heatmap[existent_ordered_days]
+            fig_heatmap, ax_heatmap = plt.subplots(figsize=(12, 8))
+            sns.heatmap(df_heatmap, annot=True, fmt=".1f", cmap='YlGnBu', linewidths=.5, ax=ax_heatmap, cbar_kws={'label': 'Média de Duração (horas)'})
+            ax_heatmap.set_title('Duração Média por Hora de Entrada e Dia da Semana')
+            ax_heatmap.set_xlabel('Dia da Semana')
+            ax_heatmap.set_ylabel('Hora de Entrada')
+            grafico_heatmap_duracao = gerar_grafico(fig_heatmap, ax_heatmap, title='Duração Média por Hora de Entrada e Dia da Semana', xlabel='Dia da Semana', ylabel='Hora de Entrada')
+        
+        # 6. Agrupamento K-Means (Gráfico Machine Learning)
+        if 'Duracao' in df_estacionamento_tratado.columns and 'Hora_Entrada' in df_estacionamento_tratado.columns:
+            grafico_kmeans_estacionamento = gerar_grafico_kmeans_estacionamento(df_estacionamento_tratado)
+
+        # 7. NOVO GRÁFICO: Lotação por Dia da Semana
+        if 'Dia_Semana' in df_estacionamento_tratado.columns:
+            lotacao_data_dia_semana = calcular_lotacao_por_dia_semana(df_estacionamento_tratado)
+            grafico_lotacao_dia_semana = gerar_grafico_lotacao_por_dia_semana(lotacao_data_dia_semana)
+        else:
+            print("DEBUG: Coluna 'Dia_Semana' não encontrada no DataFrame tratado. Não gerando gráfico de lotação por dia da semana.")
 
 
         caminho_csv_estacionamento_tratado = os.path.join(script_dir, 'dataset', 'csv_estacionamento_tratado.csv')
         print(f"Salvando o arquivo CSV tratado em: {caminho_csv_estacionamento_tratado}")
         df_estacionamento_tratado.to_csv(caminho_csv_estacionamento_tratado, index=False, quoting=csv.QUOTE_MINIMAL)
-    else:
+    else: # Caso haja erro ou DataFrame vazio, gera plots vazios
         def get_empty_plot(title):
             fig, ax = plt.subplots(figsize=(8, 6))
             ax.text(0.5, 0.5, "Sem dados para o gráfico", horizontalalignment='center', verticalalignment='center', fontsize=16, color='gray')
@@ -386,8 +465,8 @@ def realizar_analise_completa():
         grafico_histograma_duracao = get_empty_plot('Histograma da Duração de Permanência')
         grafico_boxplot_duracao_mes = get_empty_plot('Box Plot da Duração por Mês')
         grafico_heatmap_duracao = get_empty_plot('Duração Média por Hora de Entrada e Dia da Semana')
-        grafico_ocupacao_periodo = get_empty_plot('Ocupação Média por Período do Dia')
         grafico_kmeans_estacionamento = get_empty_plot('Padrões de Duração de Estacionamento (K-Means)')
+        grafico_lotacao_dia_semana = get_empty_plot('Atividade de Estacionamento por Dia da Semana')
 
     # --- Análise do pagamentos_placas.csv ---
     caminho_csv_pagamentos = os.path.join(script_dir, 'dataset', 'pagamentos_placas.csv')
@@ -434,13 +513,13 @@ def realizar_analise_completa():
         'estacionamento_msg_erro': estacionamento_msg_erro,
         'pagamentos_msg_erro': pagamentos_msg_erro
     }, grafico_dia_semana, grafico_media_geral, grafico_histograma_duracao, grafico_boxplot_duracao_mes, \
-        grafico_heatmap_duracao, grafico_ocupacao_periodo, grafico_kmeans_estacionamento, grafico_status_pagamento, \
-        grafico_status_pagamento_por_mes
+        grafico_heatmap_duracao, grafico_kmeans_estacionamento, grafico_lotacao_dia_semana, \
+        grafico_status_pagamento, grafico_status_pagamento_por_mes
 
 @app.route('/')
 def index():
     estatisticas, grafico_dia_semana, grafico_media_geral, grafico_histograma_duracao, grafico_boxplot_duracao_mes, \
-    grafico_heatmap_duracao, grafico_ocupacao_periodo, grafico_kmeans_estacionamento, grafico_status_pagamento, \
+    grafico_heatmap_duracao, grafico_kmeans_estacionamento, grafico_lotacao_dia_semana, grafico_status_pagamento, \
     grafico_status_pagamento_por_mes = realizar_analise_completa()
 
     return render_template('index.html',
@@ -450,10 +529,11 @@ def index():
         grafico_histograma_duracao=grafico_histograma_duracao,
         grafico_boxplot_duracao_mes=grafico_boxplot_duracao_mes,
         grafico_heatmap_duracao=grafico_heatmap_duracao,
-        grafico_ocupacao_periodo=grafico_ocupacao_periodo,
         grafico_kmeans_estacionamento=grafico_kmeans_estacionamento,
+        grafico_lotacao_dia_semana=grafico_lotacao_dia_semana,
         grafico_status_pagamento=grafico_status_pagamento,
-        grafico_status_pagamento_por_mes=grafico_status_pagamento_por_mes
+        grafico_status_pagamento_por_mes=grafico_status_pagamento_por_mes,
+        now=datetime.now()
     )
 
 if __name__ == '__main__':

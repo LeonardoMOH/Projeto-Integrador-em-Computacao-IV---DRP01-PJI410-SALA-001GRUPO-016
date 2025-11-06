@@ -7,15 +7,15 @@ Repositório da disciplina do Projeto Integrador em Computação IV pela Univesp
 2. [Problema](#problema)
 3. [Objetivo](#objetivo)
 4. [Recursos de Dados](#recursos-de-dados)
-    - [Dataset Entrada e Saída em CSV](#dataset-entrada-e-saída-em-csv)
-    - [Dataset Entrada e Saída em CSV Tratado](#dataset-entrada-e-saída-em-csv-tratado)
-    - [Dataset Pagamento em CSV](#dataset-pagamento-em-csv)
-    - [Dataset Pagamento em CSV Tratado](#dataset-pagamento-em-csv-tratado)
+    - [Dataset Entrada e Saída em CSV](#dataset-entrada-e-saída-em-csv)
+    - [Dataset Entrada e Saída em CSV Tratado](#dataset-entrada-e-saída-em-csv-tratado)
+    - [Dataset Pagamento em CSV](#dataset-pagamento-em-csv)
+    - [Dataset Pagamento em CSV Tratado](#dataset-pagamento-em-csv-tratado)
 5. [Aplicativo Flask para Análise de Dados de Estacionamento](#aplicativo-flask-para-análise-de-dados-de-estacionamento)
-    - [Funcionalidades](#funcionalidades)
+    - [Funcionalidades](#funcionalidades)
 6. [Detalhes do Código](#detalhes-do-código)
-    - [`app.py`](#apppy)
-    - [`index.html`](#indexhtml)
+    - [`app.py`](#apppy)
+    - [`index.html`](#indexhtml)
 7. [Resultados](#resultados)
 
 ---
@@ -41,13 +41,13 @@ Transformar registros operacionais em informações estratégicas, permitindo: I
 Os dados utilizados neste projeto estão localizados no diretório `analise_dados_flask/dataset/`.
 
 * [**Dataset Entrada e Saída em CSV (`csv_estacionamento.csv`)**](analise_dados_flask/dataset/csv_estacionamento.csv)
-    * Contém as entradas e saídas de veículos.
+    * Contém as entradas e saídas de veículos.
 * [**Dataset Entrada e Saída em CSV Tratado (`csv_estacionamento_tratado.csv`)**](analise_dados_flask/dataset/csv_estacionamento_tratado.csv)
-    * Versão processada do dataset de estacionamento, com colunas calculadas como duração, mês, dia da semana etc.
+    * Versão processada do dataset de estacionamento, com colunas calculadas como duração, mês, dia da semana etc.
 * [**Dataset Pagamento em CSV (`pagamentos_placas.csv`)**](analise_dados_flask/dataset/pagamentos_placas.csv)
-    * Contém informações sobre os pagamentos dos mensalistas.
+    * Contém informações sobre os pagamentos dos mensalistas.
 * [**Dataset Pagamento em CSV Tratado (`pagamentos_placas_tratado.csv`)**](analise_dados_flask/dataset/pagamentos_placas_tratado.csv)
-    * Versão processada do dataset de pagamentos, incluindo o `Status_Pagamento`.
+    * Versão processada do dataset de pagamentos, incluindo o `Status_Pagamento`.
 
 ## Aplicativo Flask para Análise de Dados de Estacionamento
 
@@ -56,25 +56,26 @@ Este é um aplicativo web simples construído com Flask para realizar a análise
 ### Funcionalidades
 
 * **Processamento e Tratamento de Dados:**
-    * Lê dados de estacionamento e pagamento de arquivos CSV.
-    * Converte strings de data e hora em objetos `datetime`.
-    * Calcula a duração da permanência em horas para estacionamento.
-    * Extrai mês, dia da semana e hora de entrada para análise.
-    * Classifica o `Status_Pagamento` (Em Dia ou Inadimplente) para o dataset de pagamentos.
-    * Trata casos de saída no dia seguinte e valores ausentes.
-    * Cria arquivos CSV tratados para ambos os datasets no diretório `dataset` do projeto.
+    * Lê dados de estacionamento e pagamento de arquivos CSV.
+    * Converte strings de data e hora em objetos `datetime`.
+    * Calcula a duração da permanência em horas para estacionamento.
+    * Extrai mês, dia da semana e hora de entrada para análise.
+    * Classifica o `Status_Pagamento` (Em Dia ou Inadimplente) para o dataset de pagamentos.
+    * Trata casos de saída no dia seguinte e valores ausentes.
+    * Cria arquivos CSV tratados para ambos os datasets no diretório `dataset` do projeto.
 * **Key Performance Indicators (KPIs):**
-    * Exibe o **Total de Registros de Estacionamento** e **Total de Registros de Pagamento** em cards visuais e interativos no dashboard.
+    * Exibe o **Total de Registros de Estacionamento** e **Total de Registros de Pagamento** em cards visuais e interativos no dashboard.
 * **Análise Exploratória de Dados (EDA) para Estacionamento:** Gera os seguintes gráficos:
-    1.  **Média de Duração por Dia da Semana:** Um gráfico de barras mostrando a duração média de permanência em cada dia da semana.
-    2.  **Média de Duração Geral:** Um gráfico de barras simples exibindo a duração média de permanência em todo o conjunto de dados.
-    3.  **Histograma da Duração de Permanência:** Um histograma para visualizar a distribuição das durações de permanência.
-    4.  **Box Plot da Duração por Mês:** Um box plot que mostra a distribuição da duração de permanência para cada mês.
-    5.  **Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana:** Um mapa de calor que visualiza a duração média de permanência em diferentes horas do dia e dias da semana, identificando horários de pico ou padrões de uso.
-    6.  **Padrões de Duração de Estacionamento (K-Means):** Um gráfico de dispersão que utiliza o algoritmo K-Means para agrupar veículos com base na duração da permanência e hora de entrada, revelando diferentes perfis de uso do estacionamento.
+    1.  **Média de Duração por Dia da Semana:** Um gráfico de barras mostrando a duração média de permanência em cada dia da semana.
+    2.  **Média de Duração Geral:** Um gráfico de barras simples exibindo a duração média de permanência em todo o conjunto de dados.
+    3.  **Histograma da Duração de Permanência:** Um histograma para visualizar a distribuição das durações de permanência.
+    4.  **Box Plot da Duração por Mês:** Um box plot que mostra a distribuição da duração de permanência para cada mês.
+    5.  **Mapa de Calor da Duração Média por Hora de Entrada e Dia da Semana:** Um mapa de calor que visualiza a duração média de permanência em diferentes horas do dia e dias da semana, identificando horários de pico ou padrões de uso.
+    6.  **Padrões de Duração de Estacionamento (K-Means):** Um gráfico de dispersão que utiliza o algoritmo K-Means para agrupar veículos com base na duração da permanência e hora de entrada, revelando diferentes perfis de uso do estacionamento.
+    7.  **Atividade de Estacionamento por Dia da Semana (Lotação):** Um gráfico de barras que mostra o número total de entradas de veículos por dia da semana, indicando os dias de maior ou menor movimento.
 * **Análise Exploratória de Dados (EDA) para Pagamentos:** Gera os seguintes gráficos:
-    1.  **Gráfico de Status de Pagamento dos Mensalistas (Geral):** Um gráfico de setores (pizza) mostrando a proporção de mensalistas "Em Dia" e "Inadimplentes".
-    2.  **Status de Pagamento Mensal de Mensalistas:** Um gráfico de barras que exibe a quantidade de mensalistas "Em Dia" e "Inadimplentes" por mês, permitindo a visualização da variação da adimplência ao longo do tempo.
+    1.  **Gráfico de Status de Pagamento dos Mensalistas (Geral):** Um gráfico de setores (pizza) mostrando a proporção de mensalistas "Em Dia" e "Inadimplentes".
+    2.  **Status de Pagamento Mensal de Mensalistas:** Um gráfico de barras que exibe a quantidade de mensalistas "Em Dia" e "Inadimplentes" por mês, permitindo a visualização da variação da adimplência ao longo do tempo.
 * **Visualização Web:** Apresenta todos os gráficos, KPIs e estatísticas de forma interativa e responsiva em um dashboard web.
 
 ## Detalhes do Código
@@ -90,13 +91,15 @@ Este arquivo contém a lógica de backend do aplicativo Flask.
 * **`tratar_dados_pagamento(df_pagamentos)`**: Pré-processa o DataFrame de pagamentos, calculando o `Status_Pagamento` baseado na data limite e dia de pagamento.
 * **`gerar_grafico(fig, ax, ...)`**: Função utilitária que salva uma figura Matplotlib em um `BytesIO` e a codifica em Base64 para ser incorporada diretamente no HTML.
 * **`gerar_grafico_kmeans_estacionamento(df_estacionamento)`**: Implementa o algoritmo K-Means para identificar padrões de uso do estacionamento com base na duração e hora de entrada, gerando um gráfico de dispersão com os clusters.
+* **`calcular_lotacao_por_dia_semana(df_estacionamento)`**: **NOVO:** Calcula o número de entradas de veículos para cada dia da semana.
+* **`gerar_grafico_lotacao_por_dia_semana(lotacao_data)`**: **NOVO:** Cria um gráfico de barras para visualizar a lotação (número de entradas) por dia da semana.
 * **`gerar_grafico_status_pagamento(df_pagamentos)`**: Função específica para criar o gráfico de setores de status de pagamento, incluindo lógica de cores e legendas.
 * **`gerar_grafico_status_pagamento_por_mes(df_pagamentos)`**: Gera um gráfico de barras que detalha o status de pagamento (Em Dia/Inadimplente) mês a mês.
 * **`realizar_analise_completa()`**: A função principal de análise de dados.
-    * Carregamento e tratamento de `csv_estacionamento.csv` e `pagamentos_placas.csv`.
-    * Geração de todos os gráficos de estacionamento (incluindo K-Means) e de pagamento.
-    * Salvamento dos DataFrames tratados em arquivos CSV.
-    * Retorna um dicionário com estatísticas (total de registros) e as strings Base64 de todos os gráficos.
+    * Carregamento e tratamento de `csv_estacionamento.csv` e `pagamentos_placas.csv`.
+    * Geração de todos os gráficos de estacionamento (incluindo K-Means e Lotação por Dia da Semana) e de pagamento.
+    * Salvamento dos DataFrames tratados em arquivos CSV.
+    * Retorna um dicionário com estatísticas (total de registros) e as strings Base64 de todos os gráficos.
 * **`@app.route('/')` (função `index()`):** A rota principal do aplicativo. Chama `realizar_analise_completa()` e renderiza o template `index.html`, passando todas as estatísticas e gráficos para exibição.
 
 ### `index.html`
@@ -138,8 +141,13 @@ No quinto gráfico é um mapa de calor que mostra a duração de permanência em
 
 No sexto gráfico, o agrupamento K-Means auxilia na identificação de perfis distintos de usuários do estacionamento com base em sua **duração de permanência** e **hora de entrada**. Cada cor representa um cluster diferente, indicando grupos de veículos com comportamentos semelhantes. Por exemplo, pode-se identificar um cluster de "estacionamentos rápidos em horários de pico" e outro de "permanências longas durante o dia de trabalho".
 
-*Gráficos 7, 8: Gráfico de Setores de Status de Pagamento dos Mensalistas e o Gráfico de Barras de Status de Pagamento Mensal*
+*Gráfico 7: Atividade de Estacionamento por Dia da Semana*
+![resultado](imagens/resultados_4_2.png)
+
+No sétimo gráfico, que representa a **atividade de estacionamento por dia da semana**, pode-se observar a **lotação (número de entradas de veículos)** para cada dia. É possível notar que durante os dias úteis a lotação se mantém relativamente estável e alta, enquanto nos finais de semana (sábado e domingo) há uma queda significativa, mostrando que esses dias são "outliers" de lotação em comparação com a semana. Isso indica um uso predominantemente comercial ou de rotina nos dias de semana, com menor movimento nos dias de lazer.
+
+*Gráficos 8, 9: Gráfico de Setores de Status de Pagamento dos Mensalistas e o Gráfico de Barras de Status de Pagamento Mensal*
 ![resultado](imagens/resultados_5.png)
 
-No sétimo gráfico, mostra a quantidade de mensalistas que estão com o pagamento atrasado e o pagamento em dia.
-No oitavo gráfico, é possível ver se os mensalistas estão em dia ou atrasado, mas em relação ao mês, permitindo identificar tendências de inadimplência.
+No oitavo gráfico, mostra a quantidade de mensalistas que estão com o pagamento atrasado e o pagamento em dia.
+No nono gráfico, é possível ver se os mensalistas estão em dia ou atrasado, mas em relação ao mês, permitindo identificar tendências de inadimplência.
